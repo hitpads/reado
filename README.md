@@ -1,4 +1,4 @@
-# READO - your favourite articles and personal blogs
+# READO - YOUR FAVOURITE ARTICLES AND PERSONAL BLOGS
 
 ## OVERVIEW
 This project is being designed to provide a seamless experience for both readers and content creators. It aims to facilitate efficient content management, user interaction, and a clean, intuitive workflow for publishing articles and managing comments/categories.
@@ -18,9 +18,9 @@ Our team’s goal is to build a quality, user-friendly blog platform where:
    
 ---
 
-## Key Features (early)
+## FEATURES (early)
 
-### 1. LOGGIN IN
+### 1. Loggin in
 - Secure login process for platform access.  
 - Verification of successful login before dashboard access.
 
