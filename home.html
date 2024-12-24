@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>reado.</title>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <h1>welcome to reado.</h1>
+        <nav>
+            <a href="#">Write</a>
+            <a href="#">Home</a>
+            <a href="#">Notifications</a>
+        </nav>
+        <!-- Profile Button -->
+        <div class="profile-button">
+            <a href="#" id="profileBtn">
+                <img src="images/profile_pic.jpg" alt="Profile" />
+            </a>
+            <ul id="dropdownMenu" class="dropdown-menu">
+                <li><a href="#">View Profile</a></li>
+                <li><a href="#">Settings</a></li>
+                <li><a href="#">Logout</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <section>
+            <h2 class="section-title">Welcome back, Ansar!</h2>
+            <div class="card-container">
+                <div class="card">
+                    <h3>Read Articles</h3>
+                    <p>Explore the latest and trending articles across various topics.</p>
+                    <a href="#" class="btn">Go to Articles</a>
+                </div>
+                <div class="card">
+                    <h3>Add New Article</h3>
+                    <p>Start writing and publishing your own articles.</p>
+                    <a href="#" class="btn">Add Article</a>
+                </div>
+                <div class="card">
+                    <h3>Manage Categories</h3>
+                    <p>Add or update categories to organize your articles.</p>
+                    <a href="#" class="btn">Manage Categories</a>
+                </div>
+                <div class="card">
+                    <h3>View Comments</h3>
+                    <p>View, approve, or delete comments on your articles.</p>
+                    <a href="#" class="btn">Manage Comments</a>
+                </div>
+                <div class="card">
+                    <h3>Preview Articles</h3>
+                    <p>Ensure your articles are ready before going live.</p>
+                    <a href="#" class="btn">Preview Articles</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 reado. where words come alive.</p>
+    </footer>
+
+    <script>
+        // JavaScript to toggle the dropdown menu
+        const profileBtn = document.getElementById('profileBtn');
+        const dropdownMenu = document.getElementById('dropdownMenu');
+
+        profileBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            dropdownMenu.classList.toggle('show');
+        });
+
+        // Close dropdown when clicked outside
+        window.addEventListener('click', function(event) {
+            if (!event.target.closest('.profile-button')) {
+                dropdownMenu.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>
