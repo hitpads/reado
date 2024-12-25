@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="/images/favicon.png">
     <title>reado.</title>
 </head>
 <body>
@@ -56,6 +57,14 @@
                     <p>Ensure your articles are ready before going live.</p>
                     <a href="#" class="btn" id="previewArticlesBtn">Preview Articles</a>
                 </div>
+            </div>
+        </section>
+
+        <!-- Recommended Articles Section -->
+        <section>
+            <h2 class="section-title">Recommended Articles</h2>
+            <div id="recommendedArticlesContainer" class="card-container">
+                <!-- Recommended articles will be dynamically inserted here -->
             </div>
         </section>
     </main>
@@ -138,8 +147,103 @@
             }, 3000);
         }
 
+        async function fetchRecommendedArticles() {
+            const apiKey = '0dc2e2475dmshdcff1d01342a365p170cc5jsndc6d077ac233';
+            const articleId = 'edab6cac5c80';
+            const url = `https://medium2.p.rapidapi.com/article/${articleId}/recommended`;
+
+            const options = {
+                method: 'GET',
+                headers: {
+                    'x-rapidapi-host': 'medium2.p.rapidapi.com',
+                    'x-rapidapi-key': apiKey
+                }
+            };
+
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                const recommendedArticlesContainer = document.getElementById('recommendedArticlesContainer');
+                recommendedArticlesContainer.innerHTML = ''; // Clear existing content
+
+                // Fetch details for each recommended article
+                for (const articleId of data.recommended_articles) {
+                    await fetchArticleDetails(articleId, recommendedArticlesContainer);
+                }
+            } catch (error) {
+                console.error('Error fetching recommended articles:', error);
+            }
+        }
+
+        async function fetchArticleDetails(articleId, container) {
+            const apiKey = '0dc2e2475dmshdcff1d01342a365p170cc5jsndc6d077ac233';
+            const url = `https://medium2.p.rapidapi.com/article/${articleId}`;
+
+            const options = {
+                method: 'GET',
+                headers: {
+                    'x-rapidapi-host': 'medium2.p.rapidapi.com',
+                    'x-rapidapi-key': apiKey
+                }
+            };
+
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const article = await response.json();
+                const authorId = await fetchAuthorDetails(article.author);
+                const authorName = authorId || 'Unknown Author';
+                const articleElement = document.createElement('div');
+                articleElement.classList.add('card');
+                articleElement.innerHTML = `
+                    <h3>${article.title}</h3>
+                    <p>${article.subtitle}</p>
+                    <p>Author: ${authorName}</p>
+                    <a href="single_article.html?id=${articleId}" class="btn">Read More</a>
+                `;
+                container.appendChild(articleElement);
+            } catch (error) {
+                console.error('Error fetching article details:', error);
+            }
+        }
+
+        async function fetchAuthorDetails(authorId) {
+            const apiKey = '0dc2e2475dmshdcff1d01342a365p170cc5jsndc6d077ac233';
+            const url = `https://medium2.p.rapidapi.com/user/${authorId}`;
+
+            const options = {
+                method: 'GET',
+                headers: {
+                    'x-rapidapi-host': 'medium2.p.rapidapi.com',
+                    'x-rapidapi-key': apiKey
+                }
+            };
+
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const user = await response.json();
+                return user.fullname;
+            } catch (error) {
+                console.error('Error fetching author details:', error);
+                return 'Unknown Author';
+            }
+        }
+
         document.getElementById('readArticlesBtn').addEventListener('click', fetchPosts);
         document.getElementById('addArticleBtn').addEventListener('click', createPost);
+
+        // Fetch recommended articles when the page loads
+        window.onload = () => {
+            fetchRecommendedArticles();
+        };
     </script>
 </body>
 </html>

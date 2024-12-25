@@ -20,24 +20,21 @@ const pool = new Pool({
     port: 5432,
 });
 
-// routes
+// Serve home page without .html extension
+app.get('/home', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'home.html'));
+});
+
+// Serve articles page without .html extension
+app.get('/articles', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'articles.html'));
+});
+
+// Routes for posts
 app.get('/posts', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM posts');
         res.json(result.rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.get('/posts/:id', async (req, res) => {
-    const { id } = req.params;
-    try {
-        const result = await pool.query('SELECT * FROM posts WHERE id = $1', [parseInt(id)]);
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Post not found' });
-        }
-        res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -56,14 +53,13 @@ app.post('/posts', async (req, res) => {
     }
 });
 
-app.put('/posts/:id', async (req, res) => {
+app.get('/posts/:id', async (req, res) => {
     const { id } = req.params;
-    const { title, content, author } = req.body;
     try {
-        const result = await pool.query(
-            'UPDATE posts SET title = $1, content = $2, author = $3 WHERE id = $4 RETURNING *',
-            [title, content, author, parseInt(id)]
-        );
+        const result = await pool.query('SELECT * FROM posts WHERE id = $1', [parseInt(id)]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Post not found' });
+        }
         res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -83,7 +79,7 @@ app.delete('/posts/:id', async (req, res) => {
     }
 });
 
-// run server
+// Start the server
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });

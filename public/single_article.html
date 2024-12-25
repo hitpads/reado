@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="/images/favicon.png">
+    <title>Article title</title>
+    
+</head>
+
+<body>
+    <header>
+        <h1>reado.</h1>
+        <nav>
+            <a href="home.html">Home</a>
+            <a href="articles.html">Articles</a>
+            <a href="#">Profile</a>
+        </nav>
+    </header>
+
+    <main>
+        <article class="article-content">
+            <div class="article-body" id="articleBody">
+                <!-- Article content will be dynamically inserted here -->
+            </div>
+        </article>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 reado. where words come alive.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js">
+    </script>
+
+    <script>
+        const renderer = {
+            image(token) {
+                // Extract data from the token
+                const src = token.href || '';
+                const alt = token.text || '';
+                const imgTitle = token.title || '';
+
+                // Log for debugging (optional)
+                console.log("Image source:", src);
+                console.log("Image alt text:", alt);
+                console.log("Image title:", imgTitle);
+
+                // Return the custom HTML for the image
+                return `<img src="${src}" alt="${alt}" title="${imgTitle}" style="width:600px; height:auto; display:block; margin:auto;">`;
+            },
+        };
+
+        // Use the updated renderer
+        marked.use({ renderer });
+
+
+
+
+        async function fetchArticleMarkdown(articleId) {
+            const apiKey = '0dc2e2475dmshdcff1d01342a365p170cc5jsndc6d077ac233';
+            const url = `https://medium2.p.rapidapi.com/article/${articleId}/markdown`;
+
+            const options = {
+                method: 'GET',
+                headers: {
+                    'x-rapidapi-host': 'medium2.p.rapidapi.com',
+                    'x-rapidapi-key': apiKey
+                }
+            };
+
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const article = await response.json();
+                const articleMarkdown = article.markdown;
+                document.getElementById('articleBody').innerHTML = marked.parse(articleMarkdown); // Convert markdown to HTML
+            } catch (error) {
+                console.error('Error fetching article content:', error);
+            }
+        }
+
+        function getQueryParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // Fetch article content when the page loads
+        window.onload = () => {
+            const articleId = getQueryParameter('id');
+            if (articleId) {
+                fetchArticleMarkdown(articleId);
+            }
+        };
+
+    </script>
+</body>
+
+</html>
