@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>posts</title>
+</head>
+<body>
+    <header>
+        <h1>Posts</h1>
+    </header>
+    <main>
+        <div>
+            <input type="text" id="searchInput" placeholder="Enter article ID">
+            <button id="searchBtn">Search</button>
+        </div>
+        <div>
+            <input type="text" id="updateId" placeholder="ID">
+            <input type="text" id="updateTitle" placeholder="Title">
+            <input type="text" id="updateContent" placeholder="Content">
+            <input type="text" id="updateAuthor" placeholder="Author">
+            <button id="updateBtn">Update</button>
+            <button id="deleteBtn">Delete</button>
+        </div>
+        <table id="articlesTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Content</th>
+                    <th>Author</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- dynamic articles -->
+            </tbody>
+        </table>
+    </main>
+
+    <!-- floating noti -->
+    <div id="floatingNotification" class="floating-notification"></div>
+
+    <script>
+        async function fetchArticles() {
+            try {
+                const response = await fetch('/posts');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const articles = await response.json();
+                const tableBody = document.querySelector('#articlesTable tbody');
+                tableBody.innerHTML = ''; // clear rows
+                articles.forEach(article => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${article.id}</td>
+                        <td>${article.title}</td>
+                        <td>${article.content}</td>
+                        <td>${article.author}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error fetching articles:', error);
+            }
+        }
+
+        async function fetchArticleById(id) {
+            try {
+                const response = await fetch(`/posts/${id}`);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const article = await response.json();
+                const tableBody = document.querySelector('#articlesTable tbody');
+                tableBody.innerHTML = ''; // clear rows
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${article.id}</td>
+                    <td>${article.title}</td>
+                    <td>${article.content}</td>
+                    <td>${article.author}</td>
+                `;
+                tableBody.appendChild(row);
+            } catch (error) {
+                console.error('Error fetching article:', error);
+            }
+        }
+
+        async function updateArticle() {
+            const id = document.getElementById('updateId').value;
+            const title = document.getElementById('updateTitle').value;
+            const content = document.getElementById('updateContent').value;
+            const author = document.getElementById('updateAuthor').value;
+
+            const postData = { title, content, author };
+
+            try {
+                const response = await fetch(`/posts/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(postData)
+                });
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const updatedPost = await response.json();
+                console.log(updatedPost);
+                fetchArticles(); // update list
+                showNotification('Article Updated');
+            } catch (error) {
+                console.error('Error updating article:', error);
+                showNotification('Error updating article');
+            }
+        }
+
+        async function deleteArticle() {
+            const id = document.getElementById('updateId').value;
+
+            try {
+                const response = await fetch(`/posts/${id}`, {
+                    method: 'DELETE'
+                });
+                if (response.status === 404) {
+                    showNotification('Article already deleted');
+                    return;
+                }
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                console.log('Article deleted');
+                fetchArticles(); // update list
+                showNotification('Article Deleted');
+            } catch (error) {
+                console.error('Error deleting article:', error);
+                showNotification('Error deleting article');
+            }
+        }
+
+        function showNotification(message) {
+            const notification = document.getElementById('floatingNotification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        document.getElementById('searchBtn').addEventListener('click', () => {
+            const id = document.getElementById('searchInput').value;
+            if (id) {
+                fetchArticleById(id);
+            }
+        });
+
+        document.getElementById('updateBtn').addEventListener('click', updateArticle);
+        document.getElementById('deleteBtn').addEventListener('click', deleteArticle);
+
+        window.onload = fetchArticles;
+    </script>
+</body>
+</html>
