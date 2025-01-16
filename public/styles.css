@@ -224,3 +224,54 @@ th {
 .article-body p {
     margin-bottom: 20px;
 }
+
+/* Pagination Controls */
+#paginationControls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+#paginationControls button {
+    padding: 8px 12px;
+    background-color: #222;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#paginationControls button:hover:not(:disabled) {
+    background-color: #444;
+}
+
+#paginationControls button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+#currentPage {
+    font-size: 1.2em;
+    color: #333;
+}
+
+/* Floating Notification */
+.floating-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #333;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.5s;
+    z-index: 1000;
+}
+
+.floating-notification.show {
+    opacity: 1;
+}

@@ -20,7 +20,7 @@
                 <img src="images/profile_pic.jpg" alt="Profile" />
             </a>
             <ul id="dropdownMenu" class="dropdown-menu">
-                <li><a href="#" id="viewProfileBtn">View Profile</a></li>
+                <li><a href="profile.html" id="viewProfileBtn">View Profile</a></li>
                 <li><a href="#">Settings</a></li>
                 <li><a href="#">Logout</a></li>
             </ul>
@@ -148,8 +148,8 @@
         }
 
         async function fetchRecommendedArticles() {
-            const apiKey = '0dc2e2475dmshdcff1d01342a365p170cc5jsndc6d077ac233';
-            const articleId = 'edab6cac5c80';
+            const apiKey = 'abbddfb519mshe5216735fde78bbp17d89bjsna873b4f69856';
+            const articleId = '1c560214fbac';
             const url = `https://medium2.p.rapidapi.com/article/${articleId}/recommended`;
 
             const options = {
@@ -167,9 +167,8 @@
                 }
                 const data = await response.json();
                 const recommendedArticlesContainer = document.getElementById('recommendedArticlesContainer');
-                recommendedArticlesContainer.innerHTML = ''; // Clear existing content
+                recommendedArticlesContainer.innerHTML = ''; // clear content
 
-                // Fetch details for each recommended article
                 for (const articleId of data.recommended_articles) {
                     await fetchArticleDetails(articleId, recommendedArticlesContainer);
                 }
@@ -179,7 +178,7 @@
         }
 
         async function fetchArticleDetails(articleId, container) {
-            const apiKey = '0dc2e2475dmshdcff1d01342a365p170cc5jsndc6d077ac233';
+            const apiKey = 'abbddfb519mshe5216735fde78bbp17d89bjsna873b4f69856';
             const url = `https://medium2.p.rapidapi.com/article/${articleId}`;
 
             const options = {
@@ -213,7 +212,7 @@
         }
 
         async function fetchAuthorDetails(authorId) {
-            const apiKey = '0dc2e2475dmshdcff1d01342a365p170cc5jsndc6d077ac233';
+            const apiKey = 'abbddfb519mshe5216735fde78bbp17d89bjsna873b4f69856';
             const url = `https://medium2.p.rapidapi.com/user/${authorId}`;
 
             const options = {
@@ -240,7 +239,6 @@
         document.getElementById('readArticlesBtn').addEventListener('click', fetchPosts);
         document.getElementById('addArticleBtn').addEventListener('click', createPost);
 
-        // Fetch recommended articles when the page loads
         window.onload = () => {
             fetchRecommendedArticles();
         };
