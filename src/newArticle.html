@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+        <html lang="en">
+        <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="styles.css">
+        <title>Write an Article | reado.</title>
+</head>
+<body>
+<header>
+    <h1>Create a New Article</h1>
+    <nav>
+        <a href="home.html">Home</a>
+        <a href="profile.html">Profile</a>
+    </nav>
+</header>
+
+<main>
+    <form id="articleForm">
+        <label for="title">Article Title:</label>
+        <input type="text" id="title" name="title" placeholder="Enter the article title" required />
+
+        <label for="content">Content:</label>
+        <textarea id="content" name="content" rows="10" placeholder="Write your article content here..." required></textarea>
+
+        <label for="tags">Tags:</label>
+        <input type="text" id="tags" name="tags" placeholder="Enter tags (comma-separated)" />
+
+        <label for="categories">Categories:</label>
+        <select id="categories" name="categories">
+            <option value="technology">Technology</option>
+            <option value="science">Science</option>
+            <option value="lifestyle">Lifestyle</option>
+            <option value="news">News</option>
+            <option value="other">Other</option>
+        </select>
+
+        <button type="submit" id="postBtn">Post</button>
+        <button type="button" id="cancelBtn">Cancel</button>
+    </form>
+</main>
+
+<script>
+    const form = document.getElementById('articleForm');
+    const cancelBtn = document.getElementById('cancelBtn');
+
+    // Function to handle form submission
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault(); // Prevent the default form submission
+
+        // Construct the article data
+        const articleData = {
+            title: form.title.value.trim(),
+            content: form.content.value.trim(),
+            tags: form.tags.value.trim()
+                ? form.tags.value.trim().split(',').map(tag => tag.trim()) // Split tags by commas and trim spaces
+                : [],
+            categories: form.categories.value, // Get selected category
+        };
+
+        // Validate user inputs
+        if (!articleData.title) {
+            alert('Article title is required');
+            return;
+        }
+        if (!articleData.content) {
+            alert('Article content is required');
+            return;
+        }
+
+        try {
+            // Send a POST request to the backend
+            const response = await fetch('/articles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(articleData),
+            });
+
+            if (response.ok) {
+                // On success, redirect to the profile page or show a success message
+                alert('Article posted successfully!');
+                window.location.href = 'profile.html';
+            } else {
+                // Handle server error response
+                const errMessage = await response.text();
+                alert(`Error posting article: ${errMessage}`);
+            }
+        } catch (error) {
+            // Handle unexpected errors, e.g., network issues
+            console.error('Error:', error);
+            alert('An unexpected error occurred while posting the article.');
+        }
+    });
+
+    // Handle the "Cancel" button click
+    cancelBtn.addEventListener('click', () => {
+        const confirmCancel = confirm('Are you sure you want to cancel? Any unsaved changes will be lost.');
+        if (confirmCancel) {
+            window.location.href = 'profile.html';
+        }
+    });
+</script>
+</body>
+</html>
