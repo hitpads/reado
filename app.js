@@ -1,56 +1,72 @@
-require('dotenv').config();
-const express = require('express');
-const { auth } = require('express-openid-connect');
-const path = require('path');
-const routes = require('./routes/routes');
-const app = express();
-const requiresAuth = require('./middlewares/requiresAuth');
+// Node Requirements
+const path = require("path");
 
-// Middleware
-app.use(express.json()); // Parse JSON payloads
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded data
+// Inner Requirements
+const connectDB = require("./config/db");
+const winston = require("./config/winston");
+const { errorHandler } = require("./middlewares/errors");
+const { setHeaders } = require("./middlewares/headers");
+const { limiter } = require("./config/rateLimit");
 
-// Static file serve
-app.use(express.static(path.join(__dirname, 'src'))); // Serve files from public/ folder
+// Outer Requirements
+const fileUpload = require("express-fileupload");
+const express = require("express");
+const dotEnv = require("dotenv");
+const morgan = require("morgan");
 
-// Auth0
-const config = {
-    authRequired: false,
-    auth0Logout: true,
-    secret: process.env.AUTH0_SECRET,
-    baseURL: process.env.AUTH0_BASE_URL,
-    clientID: process.env.AUTH0_CLIENT_ID,
-    issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
-};
+// Load Config
+dotEnv.config({ path: "./config/config.env" });
 
-// authentication middleware
-app.use(auth(config));
-
-// link backend and frontend routes
-app.use(routes);
-
-// Handle 404
-app.use((req, res) => {
-    res.status(404).sendFile(path.join(__dirname, 'src', '404.html'));
-});
-
-// Centralized error handling
-app.use((err, req, res, next) => {
-    console.error(err.stack); // Log errors to the console
-    res.status(500).json({
-        message: 'Internal Server Error',
-        error: process.env.NODE_ENV === 'development' ? err : {}, // Show stack trace in development
-    });
-});
-
-app.get('/login', (req, res) => {
-    res.oidc.login({
-        returnTo: '/', // Redirect back to the homepage after login
-    });
-});
-
-// Start
+// ENVs
 const PORT = process.env.PORT || 3000;
+const NODE_ENV = process.env.NODE_ENV;
+
+// Database Connection
+connectDB();
+
+// App
+const app = express();
+
+// Rate Limiter
+app.use(limiter);
+
+// Logging
+if (process.env.NODE_ENV === "development")
+    app.use(morgan("combined", { stream: winston.stream }));
+
+app.use(express.static(path.join(__dirname, "src")));
+
+// BodyParser
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(setHeaders);
+
+// File Upload
+app.use(fileUpload());
+
+// Static Folder
+app.use(express.static(path.join(__dirname, "public")));
+
+// Routes
+app.use("/", require("./routes/userRouter"));
+app.use("/admin/roles", require("./routes/roleManagementRouter"));
+app.use("/admin/users", require("./routes/userManagementRouter"));
+app.use("/admin/categories", require("./routes/categoryRouter"));
+app.use("/comments", require("./routes/commentRouter"));
+app.use("/p", require("./routes/blogRouter"));
+app.use("/admin/blogs", require("./routes/blogManagementRouter"));
+app.use("/admin/tags", require("./routes/tagRouter"));
+app.use("/admin/url-roles", require("./routes/urlRolesRouter"));
+
+app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "src", "home.html"));
+});
+
+// Error Controller
+app.use(errorHandler);
+
+// Port Settings
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log("***********************");
+    console.log(`Server started on ${PORT} && running on ${NODE_ENV} mode`);
 });

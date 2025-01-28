@@ -48,46 +48,6 @@
 
         marked.use({ renderer });
 
-
-
-
-        async function fetchArticleMarkdown(articleId) {
-            const apiKey = 'abbddfb519mshe5216735fde78bbp17d89bjsna873b4f69856';
-            const url = `https://medium2.p.rapidapi.com/article/${articleId}/markdown`;
-
-            const options = {
-                method: 'GET',
-                headers: {
-                    'x-rapidapi-host': 'medium2.p.rapidapi.com',
-                    'x-rapidapi-key': apiKey
-                }
-            };
-
-            try {
-                const response = await fetch(url, options);
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                const article = await response.json();
-                const articleMarkdown = article.markdown;
-                document.getElementById('articleBody').innerHTML = marked.parse(articleMarkdown); // markdown to HTML
-            } catch (error) {
-                console.error('Error fetching article content:', error);
-            }
-        }
-
-        function getQueryParameter(name) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name);
-        }
-
-        window.onload = () => {
-            const articleId = getQueryParameter('id');
-            if (articleId) {
-                fetchArticleMarkdown(articleId);
-            }
-        };
-
     </script>
 </body>
 
