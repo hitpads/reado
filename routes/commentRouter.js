@@ -3,7 +3,6 @@ const express = require("express");
 const {
     authenticated,
     requireRoles,
-    verifiedEmail,
 } = require("../middlewares/auth");
 const commentController = require("../controllers/commentController");
 
@@ -13,8 +12,7 @@ const router = express.Router();
 router.get(
     "/all-comments",
     authenticated,
-    verifiedEmail,
-    requireRoles,
+    // requireRoles,
     commentController.getAllComments
 );
 
@@ -31,8 +29,7 @@ router.put("/edit-comment/:id", authenticated, commentController.editComment);
 router.put(
     "/admin-edit-comment/:id",
     authenticated,
-    verifiedEmail,
-    requireRoles,
+    // requireRoles,
     commentController.adminEditComment
 );
 
@@ -40,8 +37,7 @@ router.put(
 router.delete(
     "/delete-comment/:id",
     authenticated,
-    verifiedEmail,
-    requireRoles,
+    // requireRoles,
     commentController.adminDeleteComment
 );
 

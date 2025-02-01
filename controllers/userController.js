@@ -31,28 +31,6 @@ exports.newAccessToken = async (req, res, next) => {
     }
 };
 
-// POST - /verify-email-request - Emails a link that verifies the email
-exports.verifyEmailRequest = async (req, res, next) => {
-    try {
-        const email = req.body.email;
-        await service.verifyEmailRequest(email);
-        res.status(200).json({ message: "verify email sent" });
-    } catch (err) {
-        next(err);
-    }
-};
-
-// GET - /verify-email/:token - Verifies user's email
-exports.verifyEmail = async (req, res, next) => {
-    const token = req.params.token;
-    try {
-        await service.verifyEmail(token);
-        res.status(200).json({ message: "done" });
-    } catch (err) {
-        next(err);
-    }
-};
-
 // POST - /logout - Logout Handler
 exports.logout = async (req, res, next) => {
     const deviceIdentifier = await req.headers.deviceidentifier;

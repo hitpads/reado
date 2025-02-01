@@ -16,8 +16,6 @@ exports.showAllPosts = async () => {
     const posts = await Blog.find({ status: "public" }).populate([
         "user",
         "comments",
-        "tags",
-        "category",
     ]);
 
     if (!posts) {
@@ -35,8 +33,6 @@ exports.singlePost = async (id) => {
     const post = await Blog.findById(id).populate([
         "user",
         "comments",
-        "tags",
-        "category",
     ]);
 
     if (!post || post.status !== "public") {

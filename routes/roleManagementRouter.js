@@ -3,8 +3,7 @@ const express = require("express");
 const roleManagementController = require("../controllers/roleManagementController");
 const {
     authenticated,
-    requireRoles,
-    verifiedEmail,
+    // requireRoles,
 } = require("../middlewares/auth");
 
 const router = express.Router();
@@ -13,8 +12,7 @@ const router = express.Router();
 router.get(
     "/",
     authenticated,
-    verifiedEmail,
-    requireRoles,
+    // requireRoles,
     roleManagementController.showAllRoles
 );
 
@@ -22,8 +20,7 @@ router.get(
 router.post(
     "/add-role",
     authenticated,
-    verifiedEmail,
-    requireRoles,
+    // requireRoles,
     roleManagementController.addRole
 );
 
@@ -31,8 +28,7 @@ router.post(
 router.put(
     "/edit-role/:id",
     authenticated,
-    verifiedEmail,
-    requireRoles,
+    // requireRoles,
     roleManagementController.editRole
 );
 
@@ -40,8 +36,7 @@ router.put(
 router.delete(
     "/delete-role/:id",
     authenticated,
-    verifiedEmail,
-    requireRoles,
+    // requireRoles,
     roleManagementController.deleteRole
 );
 
@@ -49,8 +44,7 @@ router.delete(
 router.get(
     "/detail-role/:id",
     authenticated,
-    verifiedEmail,
-    requireRoles,
+    // requireRoles,
     roleManagementController.detailRole
 );
 

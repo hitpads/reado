@@ -3,8 +3,7 @@ const express = require("express");
 const userController = require("../controllers/userController");
 const {
     authenticated,
-    requireRoles,
-    verifiedEmail,
+    // requireRoles,
 } = require("../middlewares/auth");
 
 const router = express.Router();
@@ -15,21 +14,11 @@ router.post("/login", userController.login);
 // POST - /access-token - Create new access token
 router.post("/access-token", userController.newAccessToken);
 
-// POST - /verify-email-request - Emails a link that verifies the email
-router.post(
-    "/verify-email-request",
-    authenticated,
-    userController.verifyEmailRequest
-);
-
-// GET - /verify-email/:token - Verifies user's email
-router.get("/verify-email/:token", authenticated, userController.verifyEmail);
-
 // POST - /register - Register Handler
 router.post("/register", userController.register);
 
 // POST - /logout - Logout Handler
-router.post("/logout", authenticated, verifiedEmail, userController.logout);
+router.post("/logout", authenticated, userController.logout);
 
 // POST - /forget-password - Forget Password Handler
 router.post("/forget-password", userController.forgetPassword);

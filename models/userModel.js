@@ -20,10 +20,6 @@ const userSchema = new mongoose.Schema({
         required: true,
         minlength: 4,
     },
-    isEmailVerified: {
-        type: Boolean,
-        default: false,
-    },
     roles: [
         {
             type: mongoose.Schema.Types.ObjectId,

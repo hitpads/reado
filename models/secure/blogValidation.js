@@ -13,25 +13,4 @@ exports.addPostSchema = yup.object().shape({
             ["public", "draft", "archived"],
             "Choose one of these: public, draft, archived"
         ),
-    thumbnail: yup.object().shape({
-        name: yup.string().required("Thumbnail is required"),
-        size: yup.number().max(3000000, "Thumbnail can't be more than 3 mgbs"),
-        mimetype: yup
-            .mixed()
-            .oneOf(
-                ["image/jpeg", "image/png"],
-                "Only jped and png is acceptable for thumbnail"
-            ),
-    }),
-    tags: yup.array(),
-});
-
-exports.singleImageSchema = yup.object().shape({
-    image: yup.object().shape({
-        name: yup.string().required("image is required"),
-        size: yup.number().max(3000000, "image can't be more than 3 mgbs"),
-        mimetype: yup
-            .mixed()
-            .oneOf(["image/jpeg", "image/png"], "only jpg and png"),
-    }),
 });

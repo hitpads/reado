@@ -20,10 +20,6 @@ const blogSchema = new mongoose.Schema({
         default: "draft",
         enum: ["public", "draft", "archived"],
     },
-    thumbnail: {
-        type: String,
-        required: true,
-    },
     likes: {
         type: Number,
         default: 0,
@@ -32,13 +28,6 @@ const blogSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
-    tags: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Tag",
-            default: [],
-        },
-    ],
     comments: [
         {
             type: mongoose.Schema.Types.ObjectId,
@@ -49,11 +38,6 @@ const blogSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true,
-    },
-    category: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Category",
         required: true,
     },
     createdAt: {

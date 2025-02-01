@@ -2,9 +2,8 @@ const express = require("express");
 
 const blogManagementController = require("../controllers/blogManagementController");
 const {
-    requireRoles,
+    // requireRoles,
     authenticated,
-    verifiedEmail,
 } = require("../middlewares/auth");
 
 const router = express.Router();
@@ -13,8 +12,7 @@ const router = express.Router();
 router.get(
     "/all",
     authenticated,
-    verifiedEmail,
-    requireRoles,
+    // requireRoles,
     blogManagementController.showAllPosts
 );
 
@@ -22,8 +20,7 @@ router.get(
 router.get(
     "/single-post/:id",
     authenticated,
-    verifiedEmail,
-    requireRoles,
+    // requireRoles,
     blogManagementController.singlePost
 );
 
@@ -31,8 +28,7 @@ router.get(
 router.post(
     "/create-post",
     authenticated,
-    verifiedEmail,
-    requireRoles,
+    // requireRoles,
     blogManagementController.createPost
 );
 
@@ -40,8 +36,7 @@ router.post(
 router.put(
     "/edit-post/:id",
     authenticated,
-    verifiedEmail,
-    requireRoles,
+    // requireRoles,
     blogManagementController.editPost
 );
 
@@ -49,8 +44,7 @@ router.put(
 router.delete(
     "/delete-post/:id",
     authenticated,
-    verifiedEmail,
-    requireRoles,
+    // requireRoles,
     blogManagementController.deletePost
 );
 
@@ -58,8 +52,7 @@ router.delete(
 router.post(
     "/upload-image",
     authenticated,
-    verifiedEmail,
-    requireRoles,
+    // requireRoles,
     blogManagementController.uploadImage
 );
 module.exports = router;

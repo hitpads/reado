@@ -62,25 +62,6 @@ exports.authenticated = async (req, res, next) => {
     }
 };
 
-exports.verifiedEmail = async (req, res, next) => {
-    const userId = req.userId;
-    try {
-        const user = await User.findById(userId);
-
-        if (!user) {
-            throw createError(422, "", "no user found");
-        }
-
-        if (!user.isEmailVerified) {
-            throw createError(401, "", "the user's email is not verified");
-        }
-
-        next();
-    } catch (err) {
-        next(err);
-    }
-};
-
 exports.requireRoles = async (req, res, next) => {
     try {
         const originalUrl = req.originalUrl;

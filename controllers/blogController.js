@@ -10,7 +10,7 @@ exports.showAllPosts = async (req, res, next) => {
     }
 };
 
-// GET - /p/single-post/:id - Shows All the Posts
+// GET - /p/single-post/:id - Shows the post
 exports.singlePost = async (req, res, next) => {
     try {
         const id = req.params.id;

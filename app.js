@@ -51,11 +51,9 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/", require("./routes/userRouter"));
 app.use("/admin/roles", require("./routes/roleManagementRouter"));
 app.use("/admin/users", require("./routes/userManagementRouter"));
-app.use("/admin/categories", require("./routes/categoryRouter"));
 app.use("/comments", require("./routes/commentRouter"));
 app.use("/p", require("./routes/blogRouter"));
 app.use("/admin/blogs", require("./routes/blogManagementRouter"));
-app.use("/admin/tags", require("./routes/tagRouter"));
 app.use("/admin/url-roles", require("./routes/urlRolesRouter"));
 
 app.get("*", (req, res) => {
@@ -63,7 +61,7 @@ app.get("*", (req, res) => {
 });
 
 // Error Controller
-app.use(errorHandler);
+// app.use(errorHandler);
 
 // Port Settings
 app.listen(PORT, () => {

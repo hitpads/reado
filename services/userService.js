@@ -3,7 +3,6 @@ const bcrypt = require("bcryptjs");
 const redis = require("redis");
 
 const User = require("../models/userModel");
-const { sendEmail } = require("../utils/mailer");
 const { createError } = require("../middlewares/errors");
 const RefreshToken = require("../models/refreshTokenModel");
 const ms = require("ms");
@@ -131,75 +130,6 @@ exports.newAccessToken = async (token, deviceIdentifier) => {
     } else {
         throw createError(401, "", "token is not valid");
     }
-};
-
-// Verify Email Request
-exports.verifyEmailRequest = async (email) => {
-    const user = await User.findOne({ email });
-
-    if (!user) {
-        throw createError(404, "", "user not found");
-    }
-
-    const isEmailAlreadyVerified = user.isEmailVerified;
-    if (isEmailAlreadyVerified) {
-        throw createError(422, "", "the email is already verified");
-    }
-
-    const token = jwt.sign(
-        { userId: user._id, email: email, usage: "emailVerify" },
-        process.env.JWT_SECRET,
-        {
-            expiresIn: "1h",
-        }
-    );
-    const verifyLink = `${process.env.DOMAIN}/verify-email/${token}`; // Replace your domain
-    console.log(verifyLink);
-
-    const isEmailSent = await sendEmail(
-        user.email,
-        user.fullname,
-        "verify email",
-        `<a href="${verifyLink}">click here for verifying email/a>`
-    );
-
-    if (!isEmailSent) {
-        throw createError(422, "", "email didn't send - server problem");
-    }
-};
-
-// Verify Email
-exports.verifyEmail = async (token) => {
-    if (!client.isOpen) await client.connect();
-
-    const isTokenDisabled = await client.get(token);
-    if (isTokenDisabled == "disabled") {
-        throw createError(
-            401,
-            "This token is disabled",
-            "no permission to access the resource"
-        );
-    }
-
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (!decodedToken) {
-        throw createError(401, "", "don't have the premission");
-    }
-
-    if (decodedToken.usage !== "emailVerify") {
-        throw createError(422, "", "this token is not for email verfication");
-    }
-    const user = await User.findOne({ _id: decodedToken.userId });
-
-    if (!user) {
-        throw createError(404, "", "no user found with this id");
-    }
-
-    user.isEmailVerified = true;
-    await user.save();
-    await client.set(token, "disabled");
-    await client.expire(token, 24 * 60 * 60);
 };
 
 // Register
@@ -361,7 +291,6 @@ exports.editProfile = async (userId, newEmail, newFullName) => {
         confirmPassword: "Password",
     });
 
-    if (user.email !== newEmail) user.isEmailVerified = false;
     user.email = newEmail;
     user.fullname = newFullName;
 
