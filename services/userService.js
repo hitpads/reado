@@ -1,29 +1,18 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const redis = require("redis");
-
 const User = require("../models/userModel");
 const { createError } = require("../middlewares/errors");
 const RefreshToken = require("../models/refreshTokenModel");
 const ms = require("ms");
 
-const client = redis.createClient();
+// ✅ Проверяем, загружается ли `JWT_SECRET`
+if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is not defined in .env");
+}
 
-// Login
-exports.login = async (email, password, rememberMe, deviceIdentifier) => {
-    const user = await User.findOne({ email });
-
-    if (!user) {
-        throw createError(404, "", "no user found");
-    }
-
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordCorrect) {
-        throw createError(422, "", "wrong password");
-    }
-
-    const accessToken = jwt.sign(
+// ✅ Функция генерации `accessToken`
+const generateAccessToken = (user) => {
+    return jwt.sign(
         {
             user: {
                 userId: user._id.toString(),
@@ -35,110 +24,165 @@ exports.login = async (email, password, rememberMe, deviceIdentifier) => {
         process.env.JWT_SECRET,
         { expiresIn: "15m" }
     );
+};
 
-    const isRefreshTokenAlreadyCreated = await RefreshToken.findOne({
-        deviceIdentifier,
-    });
+// ✅ Функция генерации `refreshToken`
+const generateRefreshToken = (user) => {
+    return jwt.sign(
+        {
+            user: {
+                userId: user._id.toString(),
+                email: user.email,
+                fullname: user.fullname,
+            },
+            usage: "auth-refresh",
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "15d" }
+    );
+};
 
+// ✅ Логин пользователя
+exports.login = async (email, password, rememberMe, deviceIdentifier) => {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        throw createError(404, "", "No user found");
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) {
+        throw createError(422, "", "Wrong password");
+    }
+
+    // Создание токенов
+    const accessToken = generateAccessToken(user);
     let theRefreshToken;
+
+    // Проверяем, есть ли уже `refreshToken` в базе
+    const isRefreshTokenAlreadyCreated = await RefreshToken.findOne({ deviceIdentifier });
 
     if (!isRefreshTokenAlreadyCreated) {
         const refreshTokenExpiresIn = rememberMe ? "15d" : "1d";
-        const expiresInMs = ms(refreshTokenExpiresIn); // Convert expiresIn string to milliseconds
-        const refreshTokenExpirationTime = Date.now() + expiresInMs; // Add expiresInMs to current timestamp
+        const expiresInMs = ms(refreshTokenExpiresIn);
+        const refreshTokenExpirationTime = Date.now() + expiresInMs;
 
-        const refreshToken = jwt.sign(
-            {
-                user: {
-                    userId: user._id.toString(),
-                    email: user.email,
-                    fullname: user.fullname,
-                },
-                usage: "auth-refresh",
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: refreshTokenExpiresIn }
-        );
-
-        theRefreshToken = refreshToken;
+        theRefreshToken = generateRefreshToken(user);
 
         await RefreshToken.create({
-            token: refreshToken,
+            token: theRefreshToken,
             user: user._id.toString(),
             expiresAt: new Date(refreshTokenExpirationTime),
             deviceIdentifier,
         });
+    } else {
+        theRefreshToken = isRefreshTokenAlreadyCreated.token;
     }
 
     return {
-        accessToken: accessToken,
+        accessToken,
         refreshToken: theRefreshToken,
         userId: user._id.toString(),
     };
 };
 
-// Create new access token
-exports.newAccessToken = async (token, deviceIdentifier) => {
-    if (!client.isOpen) await client.connect();
+// ✅ Обновление `accessToken`
 
-    const decodedToken = jwt.decode(token);
-
-    if (decodedToken.usage === "auth-refresh") {
-        try {
-            const isUserLoggedIn = await RefreshToken.findOne({ deviceIdentifier });
-
-            if (!isUserLoggedIn) {
-                throw createError(401, "", "login again");
-            }
-
-            const finalDecodedToken = jwt.verify(token, process.env.JWT_SECRET);
-
-            if (!finalDecodedToken) {
-                await RefreshToken.findOneAndRemove({ deviceIdentifier });
-                throw createError(401, "", "login again");
-            }
-
-            const isTokenDisabled = await client.get(token);
-
-            if (isTokenDisabled == "disabled") {
-                throw createError(401, "", "This refresh token is disabled");
-            }
-
-            const user = await User.findById(decodedToken.user.userId);
-
-            const accessToken = jwt.sign(
-                {
-                    user: {
-                        userId: user._id.toString(),
-                        email: user.email,
-                        fullname: user.fullname,
-                    },
-                    usage: "auth-access",
-                },
-                process.env.JWT_SECRET,
-                { expiresIn: "15m" }
-            );
-
-            return accessToken;
-        } catch (err) {
-            if (err.message === "jwt expired") {
-                await RefreshToken.findOneAndRemove({ deviceIdentifier });
-                throw createError(401, "", "login again");
-            }
-            throw createError(401, "", "login again");
-        }
-    } else {
-        throw createError(401, "", "token is not valid");
+exports.newAccessToken = async (refreshToken) => {
+    if (!refreshToken) {
+        throw createError(401, "", "Refresh token is missing");
     }
+
+    const decodedToken = jwt.decode(refreshToken);
+
+    if (!decodedToken || decodedToken.usage !== "auth-refresh") {
+        throw createError(401, "", "Invalid refresh token");
+    }
+
+    // Проверяем, есть ли `refreshToken` в базе
+    const storedToken = await RefreshToken.findOne({ token: refreshToken });
+    if (!storedToken) {
+        throw createError(401, "", "Refresh token not found");
+    }
+
+    try {
+        jwt.verify(refreshToken, process.env.JWT_SECRET);
+    } catch (err) {
+        if (err.name === "TokenExpiredError") {
+            await RefreshToken.findOneAndRemove({ token: refreshToken });
+            throw createError(401, "", "Refresh token expired, login again");
+        }
+        throw createError(401, "", "Invalid refresh token");
+    }
+
+    const user = await User.findById(decodedToken.user.userId);
+    if (!user) {
+        throw createError(404, "", "User not found");
+    }
+
+    // ✅ Генерируем новый `refreshToken`
+    const newRefreshToken = jwt.sign(
+        {
+            user: {
+                userId: user._id.toString(),
+                email: user.email,
+                fullname: user.fullname,
+            },
+            usage: "auth-refresh",
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "15d" }
+    );
+
+    // ✅ Обновляем `refreshToken` в базе
+    storedToken.token = newRefreshToken;
+    storedToken.expiresAt = new Date(Date.now() + ms("15d"));
+    await storedToken.save();
+
+    return {
+        accessToken: generateAccessToken(user),
+        refreshToken: newRefreshToken
+    };
 };
 
-// Register
+// exports.newAccessToken = async (refreshToken) => {
+//     const decodedToken = jwt.decode(refreshToken);
+
+//     if (!decodedToken || decodedToken.usage !== "auth-refresh") {
+//         throw createError(401, "", "Invalid refresh token");
+//     }
+
+//     // Проверяем, есть ли `refreshToken` в базе
+//     const storedToken = await RefreshToken.findOne({ token: refreshToken });
+//     if (!storedToken) {
+//         throw createError(401, "", "Refresh token not found");
+//     }
+
+//     try {
+//         jwt.verify(refreshToken, process.env.JWT_SECRET);
+//     } catch (err) {
+//         if (err.name === "TokenExpiredError") {
+//             await RefreshToken.findOneAndRemove({ token: refreshToken });
+//             throw createError(401, "", "Refresh token expired, login again");
+//         }
+//         throw createError(401, "", "Invalid refresh token");
+//     }
+
+//     const user = await User.findById(decodedToken.user.userId);
+//     if (!user) {
+//         throw createError(404, "", "User not found");
+//     }
+
+//     return generateAccessToken(user);
+// };
+
+// ✅ Регистрация нового пользователя
 exports.register = async (fullname, email, password, confirmPassword) => {
     await User.userValidation({ fullname, email, password, confirmPassword });
 
-    const user = await User.findOne({ email });
-    if (user) {
-        throw createError(422, "", "email is already registerd");
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+        throw createError(422, "", "Email is already registered");
     }
 
     await User.create({
@@ -147,203 +191,52 @@ exports.register = async (fullname, email, password, confirmPassword) => {
         password,
     });
 
-    //Send Welcome Email
-    //sendEmail(email, fullname, "Welcome!", "Thank you for chosing us");
-
     return true;
 };
 
-// Logout
-exports.logout = async (accessToken, deviceIdentifier, userId) => {
-    if (!client.isOpen) await client.connect();
-
-    const decodedToken = jwt.decode(accessToken);
-
-    if (!decodedToken) {
-        throw createError(401, "", "token is wrong");
-    }
-    const disabledToken = await client.get(accessToken);
-    if (disabledToken == "disabled") {
-        throw createError(402, "", "The access token is completly disabled");
+// ✅ Выход из системы
+exports.logout = async (refreshToken) => {
+    const storedToken = await RefreshToken.findOne({ token: refreshToken });
+    if (!storedToken) {
+        throw createError(401, "", "Refresh token not found");
     }
 
-    await client.set(accessToken, "disabled");
-    await client.expire(accessToken, 24 * 60 * 60);
-    await RefreshToken.findOneAndRemove({
-        deviceIdentifier,
-        user: decodedToken.user.userId,
-    });
+    await RefreshToken.findOneAndRemove({ token: refreshToken });
 };
 
-// Forget Password
-exports.forgetPassword = async (email) => {
-    const user = await User.findOne({ email });
-
-    if (!user) {
-        throw createError(404, "", "user not found");
-    }
-
-    const token = jwt.sign(
-        { userId: user._id, usage: "forgetPassword" },
-        process.env.JWT_SECRET,
-        {
-            expiresIn: "1h",
-        }
-    );
-    const resetLink = `${process.env.DOMAIN}/reset-password/${token}`; // Replace your domain
-    console.log(resetLink);
-
-    const isEmailSent = await sendEmail(
-        user.email,
-        user.fullname,
-        "forget password",
-        `<a href="${resetLink}">click here for changing password/a>`
-    );
-
-    if (!isEmailSent) {
-        throw createError(422, "", "email didn't send - server problem");
-    }
-};
-
-// Reset Forgeted Password
-exports.resetPassword = async (token, password, confirmPassword) => {
-    if (!client.isOpen) await client.connect();
-
-    const isTokenDisabled = await client.get(token);
-    if (isTokenDisabled == "disabled") {
-        throw createError(
-            401,
-            "This token is disabled",
-            "no permission to access the resource"
-        );
-    }
-
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (!decodedToken) {
-        throw createError(401, "", "don't have the premission");
-    }
-
-    if (decodedToken.usage !== "forgetPassword") {
-        throw createError(422, "", "this token is not for password resetting");
-    }
-
-    if (password !== confirmPassword) {
-        throw createError(422, "", "password and confirm password don't match");
-    }
-
-    const user = await User.findOne({ _id: decodedToken.userId });
-
-    if (!user) {
-        throw createError(404, "", "no user found with this id");
-    }
-
-    user.password = password;
-    await user.save();
-    await client.set(token, 24 * 60 * 60);
-};
-
-// Change Password
-exports.changePassword = async (
-    userId,
-    currentPassword,
-    newPassword,
-    confirmNewPassword
-) => {
-    const user = await User.findById(userId);
-
-    if (!user) {
-        throw createError(404, "", "no user found");
-    }
-
-    await User.userValidation({
-        fullname: user.fullname,
-        email: user.email,
-        password: newPassword,
-        confirmPassword: confirmNewPassword,
-    });
-
-    const isPasswordCorrect = await bcrypt.compare(
-        currentPassword,
-        user.password
-    );
-
-    if (!isPasswordCorrect) {
-        throw createError(422, "", "wrong password");
-    }
-
-    user.password = newPassword;
-    await user.save();
-};
-
-// Edit Profile
-exports.editProfile = async (userId, newEmail, newFullName) => {
-    const user = await User.findById(userId);
-
-    if (!user) {
-        throw createError(404, "", "no user found");
-    }
-
-    await User.userValidation({
-        fullname: newFullName,
-        email: newEmail,
-        password: "Password",
-        confirmPassword: "Password",
-    });
-
-    user.email = newEmail;
-    user.fullname = newFullName;
-
-    await user.save();
-};
-
-// User Info
+// ✅ Получение информации о пользователе
 exports.userInfo = async (userId) => {
     const user = await User.findById(userId).populate(["savedPosts", "comments"]);
 
     if (!user) {
-        throw createError(404, "", "no user found");
+        throw createError(404, "", "No user found");
     }
 
     return user;
 };
 
-// Saves a post
+// ✅ Сохранение поста
 exports.savePost = async (userId, postId) => {
     const user = await User.findById(userId);
-    const post = await User.findById(postId);
-
-    if (!user || !post) {
-        throw createError(404, "", "no user or post found");
+    if (!user) {
+        throw createError(404, "", "User not found");
     }
 
-    const isPostAlreadySaved = user.savedPosts.find(
-        (s) => s.toString() == post.id.toString()
-    );
-    if (isPostAlreadySaved) throw createError(402, "", "post is already saved");
+    if (user.savedPosts.includes(postId)) {
+        throw createError(400, "", "Post already saved");
+    }
 
-    user.savedPosts.push(post.id);
-    user.save();
+    user.savedPosts.push(postId);
+    await user.save();
 };
 
-// Unsaves a post
+// ✅ Удаление поста из сохранённых
 exports.unsavePost = async (userId, postId) => {
     const user = await User.findById(userId);
-    const post = await User.findById(postId);
-    console.log(post);
-
-    if (!user || !post) {
-        throw createError(404, "", "no user or post found");
+    if (!user) {
+        throw createError(404, "", "User not found");
     }
 
-    const isPostAlreadySaved = user.savedPosts.find(
-        (s) => s.toString() == post.id.toString()
-    );
-    if (!isPostAlreadySaved) throw createError(402, "", "post is not saved");
-
-    const startIndex = user.savedPosts.findIndex(
-        (s) => s.toString() == post.id.toString()
-    );
-    user.savedPosts.splice(startIndex, 1);
-    user.save();
+    user.savedPosts = user.savedPosts.filter((id) => id.toString() !== postId);
+    await user.save();
 };

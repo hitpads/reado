@@ -41,8 +41,6 @@ exports.createPost = async (
     status,
     user
 ) => {
-    const fileName = `${shortid.generate()}_${thumbnail.name}`;
-    const uploadPath = `${appRoot}/src/public/uploads/thumbnails/${fileName}`;
 
     await Blog.postValidation({
         title,
@@ -88,20 +86,6 @@ exports.editPost = async (
     const isUserAdmin = theUser.roles.find((s) => s.name == "admin");
 
     if (post.user.toString() === user.toString() || isUserAdmin) {
-        if (thumbnail.name) {
-            fs.unlink(
-                `${appRoot}/src/public/uploads/thumbnails/${post.thumbnail}`,
-                async (err) => {
-                    if (err) return console.log(err);
-                    await sharp(thumbnail.data)
-                        .jpeg({ quality: 60 })
-                        .toFile(uploadPath)
-                        .catch((err) => {
-                            console.log(err);
-                        });
-                }
-            );
-        }
 
         post.title = title;
         post.status = status;
@@ -127,12 +111,6 @@ exports.deletePost = async (id, userId) => {
 
     if (post.user.toString() === user.id.toString() || isUserAdmin) {
         await Blog.findByIdAndRemove(id);
-        const filePath = `${appRoot}/src/public/uploads/thumbnails/${post.thumbnail}`;
-        fs.unlink(filePath, (err) => {
-            if (err) {
-                throw createError(400, "", "image didn't delete");
-            }
-        });
 
         const startIndexOfUserPost = user.posts.findIndex(
             (s) => s.toString() == post.id.toString()

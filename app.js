@@ -60,11 +60,16 @@ app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "src", "home.html"));
 });
 
+require("dotenv").config();
+console.log("JWT_SECRET:", process.env.JWT_SECRET);
+
+
 // Error Controller
-// app.use(errorHandler);
+app.use(errorHandler);
 
 // Port Settings
 app.listen(PORT, () => {
     console.log("***********************");
     console.log(`Server started on ${PORT} && running on ${NODE_ENV} mode`);
 });
+
