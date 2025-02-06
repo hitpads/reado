@@ -7,12 +7,8 @@ const { createError } = require("./errors");
 const jwt = require("jsonwebtoken");
 const redis = require("redis");
 
-const client = redis.createClient();
-
 exports.authenticated = async (req, res, next) => {
     try {
-        if (!client.isOpen) await client.connect();
-
         const deviceIdentifier = await req.headers.deviceidentifier;
         const authHeader = await req.get("Authorization");
 
@@ -24,7 +20,7 @@ exports.authenticated = async (req, res, next) => {
             );
         }
 
-        const token = authHeader.substring(7); // remove Bearer prefix from token
+        const token = authHeader.substring(7);
         const decodedToken = jwt.decode(token);
 
         if (!decodedToken) throw createError(401, "", "token is not valid");
@@ -42,12 +38,6 @@ exports.authenticated = async (req, res, next) => {
 
             if (!finalDecodedToken) {
                 throw createError(401, "", "send refresh token");
-            }
-
-            const isTokenDisabled = await client.get(token);
-
-            if (isTokenDisabled == "disabled") {
-                throw createError(401, "", "This access token is disabled");
             }
 
             next();
@@ -79,7 +69,7 @@ exports.requireRoles = async (req, res, next) => {
 
             const hasRequiredRoles = roles.every((role) =>
                 userRolesNames.includes(role.name)
-            ); // Check if the user has all the required roles
+            );
 
             if (hasRequiredRoles) {
                 return next();
