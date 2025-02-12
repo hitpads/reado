@@ -3,14 +3,10 @@ const cryptoJs = require("crypto-js");
 
 // Define the schema for the refresh token
 const refreshTokenSchema = new mongoose.Schema({
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-    },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     token: { type: String, required: true },
-    deviceIdentifier: { type: String, require: true },
-    createdAt: { type: Date, default: Date.now },
-    expiresAt: { type: Date, required: true },
+    deviceIdentifier: { type: String, required: true },
+    expiresAt: { type: Date, default: Date.now, expires: "30d" }
 });
 
 // Encrypt the token before saving it to the database

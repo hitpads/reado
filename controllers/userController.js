@@ -1,5 +1,8 @@
 const { createError } = require("../middlewares/errors");
 const service = require("../services/userService");
+const jwt = require("jsonwebtoken");
+const RefreshToken = require("../models/refreshTokenModel");
+
 
 // POST - /login - Login Handler
 exports.login = async (req, res, next) => {
@@ -33,18 +36,32 @@ exports.newAccessToken = async (req, res, next) => {
 
 // POST - /logout - Logout Handler
 exports.logout = async (req, res, next) => {
-    const deviceIdentifier = await req.headers.deviceidentifier;
-    const userId = req.userId;
-    const authHeader = req.get("Authorization");
     try {
-        if (!authHeader) throw createError(401, "", "no token recived");
+        const deviceIdentifier = req.headers.deviceidentifier;
+        if (!deviceIdentifier) {
+            throw createError(400, "", "Device identifier is required");
+        }
+
+        const authHeader = req.get("Authorization");
+        if (!authHeader) {
+            throw createError(401, "", "No token received");
+        }
+
         const token = authHeader.split(" ")[1];
-        await service.logout(token, deviceIdentifier, userId);
-        res.status(200).json({ message: "done" });
+
+        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+        const userId = decodedToken.user.userId;
+
+        await service.logout(userId, deviceIdentifier);
+
+        return res.status(200).json({ message: "Logout successful" });
     } catch (err) {
+        console.error("🚨 Logout Error:", err.message);
         next(err);
     }
 };
+
+
 
 // POST - /register - Register Handler
 exports.register = async (req, res, next) => {

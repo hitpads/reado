@@ -61,7 +61,7 @@ app.get("*", (req, res) => {
 });
 
 // Error Controller
-// app.use(errorHandler);
+app.use(errorHandler);
 
 // Port Settings
 app.listen(PORT, () => {

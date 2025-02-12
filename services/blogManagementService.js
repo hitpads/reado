@@ -108,7 +108,7 @@ exports.deletePost = async (id, userId) => {
     const isUserAdmin = user.roles.find((s) => s.name == "admin");
 
     if (post.user.toString() === user.id.toString() || isUserAdmin) {
-        await Blog.findByIdAndRemove(id);
+        await Blog.findByIdAndDelete(id);
     
         const startIndexOfUserPost = user.posts.findIndex(
             (s) => s.toString() == post.id.toString()

@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const Blog = require("../models/blogModel");
+
 
 const User = require("../models/userModel");
 const { createError } = require("../middlewares/errors");
@@ -65,6 +67,8 @@ exports.login = async (email, password, rememberMe, deviceIdentifier) => {
             expiresAt: new Date(refreshTokenExpirationTime),
             deviceIdentifier,
         });
+    } else {
+        theRefreshToken = isRefreshTokenAlreadyCreated.token;
     }
 
     return {
@@ -155,4 +159,67 @@ exports.userInfo = async (userId) => {
     }
 
     return user;
+};
+// logout
+exports.logout = async (userId, deviceIdentifier) => {
+    try {
+        if (!userId || !deviceIdentifier) {
+            throw createError(400, "", "User ID and device identifier are required");
+        }
+
+        console.log("🔍 Checking refresh token for:", { userId, deviceIdentifier });
+
+        const refreshTokenDoc = await RefreshToken.findOne({
+            user: userId,
+            deviceIdentifier
+        });
+
+        if (!refreshTokenDoc) {
+            console.log("⚠️ No refresh token found, but logging out anyway.");
+            return { message: "Logout successful (no refresh token found)" };
+        }
+
+        await refreshTokenDoc.deleteOne();
+
+        return { message: "Logout successful" };
+    } catch (err) {
+        console.error("🚨 Logout Service Error:", err.message);
+        throw err;
+    }
+};
+
+exports.savePost = async (userId, postId) => {
+    const user = await User.findById(userId);
+    if (!user) {
+        throw createError(404, "", "User not found");
+    }
+
+    const post = await Blog.findById(postId);
+    if (!post) {
+        throw createError(404, "", "Post not found");
+    }
+
+    if (!user.savedPosts.includes(postId)) {
+        user.savedPosts.push(postId);
+        await user.save();
+    }
+
+    return { message: "Post saved successfully" };
+};
+
+exports.unsavePost = async (userId, postId) => {
+    const user = await User.findById(userId);
+    if (!user) {
+        throw createError(404, "", "User not found");
+    }
+
+    const postIndex = user.savedPosts.indexOf(postId);
+    if (postIndex === -1) {
+        throw createError(400, "", "Post is not saved");
+    }
+
+    user.savedPosts.splice(postIndex, 1);
+    await user.save();
+
+    return { message: "Post unsaved successfully" };
 };
