@@ -33,7 +33,7 @@ exports.addComment = async (
         throw createError(401, "", "post is not found");
     }
 
-    const commnet = await Comment.create({
+    const comment = await Comment.create({
         fullname,
         email,
         body,
@@ -42,10 +42,10 @@ exports.addComment = async (
         post,
     });
     if (theUser) {
-        theUser.comments.push(commnet._id);
+        theUser.comments.push(comment._id);
         await theUser.save();
     }
-    thePost.comments.push(commnet._id);
+    thePost.comments.push(comment._id);
     await thePost.save();
 };
 
