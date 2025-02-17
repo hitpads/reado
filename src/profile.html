@@ -28,41 +28,50 @@
 </head>
 <body>
 <header class="bg-dark text-white text-center py-3">
-  <h1>My Profile</h1>
+  <h1>reado.</h1>
   <nav>
-    <a href="/home" class="btn btn-outline-light">Home</a>
-    <button id="logout" class="btn btn-danger">Logout</button>
+    <a href="/home" class="btn btn-outline-light">home</a>
+    <button id="logout" class="btn btn-danger">logout</button>
   </nav>
 </header>
 <main class="container">
   <section id="profile-info">
-    <h2>User Info</h2>
-    <p><strong>Name:</strong> <span id="user-name">Loading...</span></p>
-    <p><strong>Email:</strong> <span id="user-email">Loading...</span></p>
+    <h2>your profile</h2>
+    <p><strong>name:</strong> <span id="user-name">Loading...</span></p>
+    <p><strong>email:</strong> <span id="user-email">Loading...</span></p>
   </section>
   <section id="saved-posts">
-    <h2>Saved Posts</h2>
+    <h2>you saved</h2>
     <div id="posts-container">
       <p>Loading saved posts...</p>
     </div>
   </section>
 </main>
+
+<script src="./static/js/auth.js"></script>
 <script>
   async function fetchProfile() {
     try {
       const token = localStorage.getItem("accessToken");
+      const deviceIdentifier = localStorage.getItem("deviceIdentifier");
       if (!token) {
         window.location.href = "/login";
         return;
       }
-      const res = await fetch("http://localhost:3000/api/profile", {
-        headers: { "Authorization": `Bearer ${token}` }
+
+      const res = await fetch("http://localhost:3000/user-info", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "deviceIdentifier": deviceIdentifier
+        }
       });
+
       const data = await res.json();
       if (res.ok) {
         document.getElementById("user-name").textContent = data.user.fullname;
         document.getElementById("user-email").textContent = data.user.email;
-        fetchSavedPosts();
+        fetchSavedPosts(data.user.savedPosts); // ✅ Pass savedPosts correctly
       } else {
         alert("Failed to load profile");
       }
@@ -71,30 +80,32 @@
     }
   }
 
-  async function fetchSavedPosts() {
+  async function fetchSavedPosts(savedPosts) {
     try {
-        const res = await fetch("http://localhost:3000/api/profile");
-        const data = await res.json();
-        const container = document.getElementById("posts-container");
+      const container = document.getElementById("posts-container");
 
-        if (!res.ok) {
-            throw new Error(`Failed to load saved posts: ${data.message}`);
-        }
+      if (!savedPosts || savedPosts.length === 0) {
+        container.innerHTML = "<p>No saved posts.</p>";
+        return;
+      }
 
-        container.innerHTML = "<h2>Saved Posts</h2>";
-        data.user.savedPosts.forEach(post => {
-            const postElement = document.createElement("div");
-            postElement.classList.add("post");
-            postElement.innerHTML = `
-                <h3><a href="single_article.html?id=${post.id}" class="text-decoration-none">${post.title}</a></h3>
+      container.innerHTML = "<h2>Saved Posts</h2>";
+      savedPosts.forEach(post => {
+        const postElement = document.createElement("div");
+        postElement.classList.add("post");
+        postElement.innerHTML = `
+                <h3><a href="single_article.html?id=${post._id}" class="text-decoration-none">${post.title}</a></h3>
+                <p>${post.body.substring(0, 100)}...</p> <!-- Show short preview -->
             `;
-            container.appendChild(postElement);
-        });
+        container.appendChild(postElement);
+      });
+
     } catch (error) {
-        console.error("Error fetching saved posts:", error);
-        alert("Failed to load saved posts");
+      console.error("Error fetching saved posts:", error);
+      alert("Failed to load saved posts");
     }
-}
+  }
+
 
   document.getElementById("logout").addEventListener("click", () => {
     localStorage.removeItem("accessToken");

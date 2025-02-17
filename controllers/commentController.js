@@ -1,4 +1,5 @@
 const service = require("../services/commentService");
+const User = require("../models/userModel");
 
 // GET - /comments/all-comments - Shows all the coments
 exports.getAllComments = async (req, res, next) => {
@@ -24,13 +25,30 @@ exports.getCommentsOfPost = async (req, res, next) => {
 // POST - /comments/add-comment - Adds a new comment
 exports.addComment = async (req, res, next) => {
     try {
-        const { fullname, email, body, parentComment, user, post } = req.body;
-        await service.addComment(fullname, email, body, parentComment, user, post);
-        res.status(200).json({ message: "done" });
+        const { body, post, parentComment } = req.body;
+        const user = req.userId; // ✅ Extract user ID from token
+
+        console.log("🔍 Checking user in database with ID:", user);  // ✅ Debugging
+
+        // ✅ Fetch user details from the database
+        const theUser = await User.findById(user).select("fullname email");
+        if (!theUser) {
+            console.error("🚨 User not found in database:", user);  // ✅ Debugging
+            return res.status(400).json({ message: "User not found" });
+        }
+
+        // ✅ Use authenticated user info
+        await service.addComment(theUser.fullname, theUser.email, body, user, post, parentComment);
+
+        res.status(200).json({ message: "Comment added!" });
     } catch (err) {
+        console.error("🚨 Error adding comment:", err.message); // ✅ Debugging
         next(err);
     }
 };
+
+
+
 
 // PUT - /comments/edit-comment/:id - Edits a comment
 exports.editComment = async (req, res, next) => {

@@ -28,17 +28,17 @@
 </head>
 <body>
 <header class="bg-dark text-white text-center py-3">
-    <h1>All Posts</h1>
+    <h1>reado.</h1>
     <nav class="d-flex justify-content-center gap-3">
-        <a href="/profile" class="btn btn-outline-light">Profile</a>
-        <a href="/new_article" class="btn btn-outline-light">New Post</a>
-        <button id="login-button" class="btn btn-primary">Login</button>
-        <button id="logout" class="btn btn-danger d-none">Logout</button>
+        <a href="/profile" class="btn btn-outline-light">profile</a>
+        <a href="/new_article" class="btn btn-outline-light">new post</a>
+        <button id="login-button" class="btn btn-primary">login</button>
+        <button id="logout" class="btn btn-danger d-none">logout</button>
     </nav>
 </header>
 <main class="container">
     <section id="posts-section">
-        <h2 class="text-center">All Posts</h2>
+        <h2 class="text-center">all posts</h2>
         <div id="posts-container">
             <p>Loading posts...</p>
         </div>
@@ -74,7 +74,7 @@
                 const postElement = document.createElement("div");
                 postElement.classList.add("post", "p-3");
                 postElement.innerHTML = `
-                    <h3><a href="single_article.html?id=${post.id}" class="text-decoration-none">${post.title}</a></h3>
+                    <h3><a href="single_article.html?id=${post._id}" class="text-decoration-none">${post.title}</a></h3>
                     <p>${post.body.substring(0, 100)}...</p>
                     <small>By: ${post.user?.fullname || "Unknown Author"}</small>
                 `;

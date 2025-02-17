@@ -44,15 +44,25 @@
   <p class="register-link">Don't have an account? <a href="/register" id="register-link">Register</a></p>
   <button id="home-button" class="btn btn-secondary">Go to Home</button>
 </div>
+<script src="./static/js/auth.js"></script>
 <script>
   document.getElementById("login-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
-    
+
+    let deviceIdentifier = localStorage.getItem("deviceIdentifier");
+    if (!deviceIdentifier) {
+      deviceIdentifier = crypto.randomUUID();
+      localStorage.setItem("deviceIdentifier", deviceIdentifier);
+    }
+
     const res = await fetch("http://localhost:3000/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "deviceIdentifier": deviceIdentifier
+      },
       body: JSON.stringify({ email, password })
     });
     

@@ -1,5 +1,6 @@
 // Node Requirements
 const path = require("path");
+const cookieParser = require("cookie-parser");
 
 // Inner Requirements
 const connectDB = require("./config/db");
@@ -29,6 +30,7 @@ const app = express();
 
 // Rate Limiter
 app.use(limiter);
+app.use(cookieParser())
 
 // Logging
 if (process.env.NODE_ENV === "development")

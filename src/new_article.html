@@ -49,42 +49,58 @@
     <button type="button" class="btn btn-home" id="home-button">Go to Home</button>
   </form>
 </div>
+
+<script src="./static/js/auth.js"></script>
 <script>
   document.getElementById("new-post-form").addEventListener("submit", async (e) => {
     e.preventDefault();
-    
+
     const title = document.getElementById("title").value.trim();
     const body = document.getElementById("body").value.trim();
     const status = document.getElementById("status").value;
-    const token = localStorage.getItem("accessToken");
+
+    let token = localStorage.getItem("accessToken");
+    const deviceIdentifier = localStorage.getItem("deviceIdentifier");
 
     if (!token) {
-        alert("You must be logged in to create a post.");
+      token = await refreshAccessToken(); // Try refreshing the token
+      if (!token) {
+        alert("Session expired. Please log in again.");
         window.location.href = "/login";
         return;
+      }
     }
 
     try {
-        const res = await fetch("http://localhost:3000/admin/blogs/create-post", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify({ title, body, status })
-        });
+      const res = await fetch("http://localhost:3000/admin/blogs/create-post", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+          "deviceIdentifier": deviceIdentifier
+        },
+        body: JSON.stringify({ title, body, status })
+      });
 
-        const data = await res.json();
-        if (!res.ok) {
-            throw new Error(data.message);
-        }
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message);
+      }
 
-        alert("Post published successfully!");
-        window.location.href = `single_article.html?id=${data.post.id}`;
+      alert("Post published successfully!");
+
+      // ✅ Check if `data.post` exists before redirecting
+      if (data.post && data.post.id) {
+        window.location.href = `single_article.html?id=${data.post._id}`;
+      } else {
+        console.warn("Post created but response did not include post details.");
+        window.location.href = "/home";
+      }
     } catch (error) {
-        alert(error.message);
+      alert(error.message);
     }
   });
+
 
   document.getElementById("home-button").addEventListener("click", () => {
       window.location.href = "/home";

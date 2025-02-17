@@ -1,38 +1,92 @@
 const { createError } = require("../middlewares/errors");
 const service = require("../services/userService");
 const jwt = require("jsonwebtoken");
-const RefreshToken = require("../models/refreshTokenModel");
+const User = require("../models/userModel");
 
 
 // POST - /login - Login Handler
+
 exports.login = async (req, res, next) => {
     try {
-        const deviceIdentifier = await req.headers.deviceidentifier;
+        const deviceIdentifier = req.headers.deviceidentifier;
+        if (!deviceIdentifier) {
+            return res.status(400).json({ message: "Device identifier is required" });
+        }
+
         const { email, password, rememberMe } = req.body;
         const { accessToken, refreshToken, userId } = await service.login(
-            email,
-            password,
-            rememberMe,
-            deviceIdentifier
+            email, password, rememberMe, deviceIdentifier
         );
-        res.status(200).json({ accessToken, refreshToken, userId });
+
+        // Set httpOnly cookie for the refresh token
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,  // Prevent access from JavaScript
+            secure: process.env.NODE_ENV === "development", // Use HTTPS in production
+            sameSite: "Strict", // Protect against CSRF attacks
+            path: "/",
+            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+        });
+
+        res.status(200).json({ accessToken, userId });
     } catch (err) {
         next(err);
     }
 };
+// СТАРЫЙ
+// exports.login = async (req, res, next) => {
+//     try {
+//         const deviceIdentifier = await req.headers.deviceidentifier;
+//         if (!deviceIdentifier) {
+//             return res.status(400).json({ message: "Device identifier is required" });
+//         }
+//         const { email, password, rememberMe } = req.body;
+//         const { accessToken, refreshToken, userId } = await service.login(
+//             email,
+//             password,
+//             rememberMe,
+//             deviceIdentifier
+//         );
+//         res.status(200).json({ accessToken, refreshToken, userId });
+//     } catch (err) {
+//         next(err);
+//     }
+// };
 
 // POST - /access-token - Create new access token
 exports.newAccessToken = async (req, res, next) => {
     try {
-        const deviceIdentifier = await req.headers.deviceidentifier;
-        const authHeader = await req.get("Authorization");
-        const token = authHeader.substring(7); // remove Bearer prefix from token
-        const accessToken = await service.newAccessToken(token, deviceIdentifier);
+        const deviceIdentifier = req.headers.deviceidentifier;
+        if (!deviceIdentifier) {
+            return res.status(400).json({ message: "Device identifier is required" });
+        }
+
+        // Get refreshToken from cookies
+        const refreshToken = req.cookies.refreshToken;
+        if (!refreshToken) {
+            return res.status(401).json({ message: "Refresh token missing" });
+        }
+
+        // Generate a new access token using the refresh token
+        const accessToken = await service.newAccessToken(refreshToken, deviceIdentifier);
+
         res.status(200).json({ accessToken });
     } catch (err) {
         next(err);
     }
 };
+
+// СТАРЫЙ
+// exports.newAccessToken = async (req, res, next) => {
+//     try {
+//         const deviceIdentifier = await req.headers.deviceidentifier;
+//         const authHeader = await req.get("Authorization");
+//         const token = authHeader.substring(7); // remove Bearer prefix from token
+//         const accessToken = await service.newAccessToken(token, deviceIdentifier);
+//         res.status(200).json({ accessToken });
+//     } catch (err) {
+//         next(err);
+//     }
+// };
 
 // POST - /logout - Logout Handler
 exports.logout = async (req, res, next) => {
@@ -128,11 +182,21 @@ exports.editProfile = async (req, res, next) => {
 
 // GET - /user-info/:id - Returns the user's info
 exports.userInfo = async (req, res, next) => {
-    const id = req.userId;
     try {
-        const user = await service.userInfo(id);
+        const userId = req.userId;
+        console.log("🔍 Fetching user info for:", userId); // ✅ Debugging
+
+        const user = await User.findById(userId)
+            .populate("savedPosts", "title body") // ✅ Populate saved posts with title & body
+            .select("fullname email savedPosts");
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
         res.status(200).json({ user });
     } catch (err) {
+        console.error("🚨 Error fetching user info:", err.message);
         next(err);
     }
 };
@@ -142,12 +206,29 @@ exports.savePost = async (req, res, next) => {
     try {
         const userId = req.userId;
         const postId = req.params.id;
-        await service.savePost(userId, postId);
-        res.status(200).json({ message: "done" });
+
+        console.log("🔍 Saving post for user:", userId, "Post ID:", postId); // ✅ Debugging
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // ✅ Prevent duplicate saves
+        if (user.savedPosts.includes(postId)) {
+            return res.status(400).json({ message: "Post already saved" });
+        }
+
+        user.savedPosts.push(postId);
+        await user.save();
+
+        res.status(200).json({ message: "Post saved successfully!" });
     } catch (err) {
+        console.error("🚨 Error saving post:", err.message);
         next(err);
     }
 };
+
 
 // GET - /unsave-post/:id - Unsaves a post
 exports.unsavePost = async (req, res, next) => {

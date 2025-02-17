@@ -9,7 +9,7 @@ async function apiRequest(url, method = "GET", body = null) {
     };
     if (token) headers["Authorization"] = `Bearer ${token}`;
 
-    console.log("🔹 API Request Headers:", headers); // ✅ Debugging Log
+    console.log("🔹 API Request Headers:", headers);
 
     const options = { method, headers };
     if (body) options.body = JSON.stringify(body);
@@ -18,11 +18,68 @@ async function apiRequest(url, method = "GET", body = null) {
     return response.json();
 }
 
+async function refreshAccessToken() {
+    try {
+        const res = await fetch("http://localhost:3000/access-token", {
+            method: "POST",
+            credentials: "include", // ✅ Sends cookies automatically
+            headers: {
+                "deviceIdentifier": localStorage.getItem("deviceIdentifier")
+            }
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            localStorage.setItem("accessToken", data.accessToken);
+            return data.accessToken;
+        } else {
+            console.error("Failed to refresh token:", data.message);
+            return null;
+        }
+    } catch (error) {
+        console.error("Error refreshing token:", error);
+        return null;
+    }
+}
+
+async function fetchWithAuth(url, options = {}) {
+    let token = localStorage.getItem("accessToken");
+
+    if (!token) {
+        token = await refreshAccessToken();
+        if (!token) {
+            console.error("User is not authenticated. Redirecting to login...");
+            window.location.href = "../login.html";
+            return;
+        }
+    }
+
+    // Authorization header
+    options.headers = {
+        ...options.headers,
+        "Authorization": `Bearer ${token}`
+    };
+
+    const res = await fetch(url, options);
+
+    // If token expired, try refreshing it once
+    if (res.status === 401) {
+        token = await refreshAccessToken();
+        if (token) {
+            options.headers["Authorization"] = `Bearer ${token}`;
+            return fetch(url, options);
+        } else {
+            window.location.href = "/login.html";
+        }
+    }
+
+    return res;
+}
 
 function getDeviceIdentifier() {
     let deviceIdentifier = localStorage.getItem("deviceIdentifier");
     if (!deviceIdentifier) {
-        deviceIdentifier = crypto.randomUUID(); // Generate a unique ID
+        deviceIdentifier = crypto.randomUUID(); // Generation
         localStorage.setItem("deviceIdentifier", deviceIdentifier);
     }
     return deviceIdentifier;
@@ -82,4 +139,6 @@ document.addEventListener("DOMContentLoaded", () => {
             window.location.href = "login.html";
         });
     }
-});
+})
+
+

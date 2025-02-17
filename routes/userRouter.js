@@ -20,7 +20,7 @@ router.post("/access-token", userController.newAccessToken);
 // POST - /register - Register Handler
 router.post("/register", userController.register);
 router.get("/register", (req, res) => {
-    res.sendFile(path.resolve("C:/Users/user/Desktop/reado/src/register.html"));
+    res.sendFile(path.join(__dirname, "..", "src", "register.html"));
 });
 
 // POST - /logout - Logout Handler
