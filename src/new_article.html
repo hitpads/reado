@@ -1,111 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create New Post</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      background-color: #f8f9fa;
-    }
-    .container {
-      max-width: 600px;
-      margin-top: 50px;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    .btn-home {
-      background-color: #007bff;
-      color: white;
-      width: 100%;
-      margin-top: 10px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Write a Story - Reado</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="./static/css/styles.css" rel="stylesheet">
 </head>
 <body>
-<div class="container">
-  <h2 class="text-center">Create New Post</h2>
-  <form id="new-post-form">
-    <div class="mb-3">
-      <label for="title" class="form-label">Title</label>
-      <input type="text" class="form-control" id="title" placeholder="Enter title" required>
+    <!-- Header -->
+    <header>
+        <h1>reado.</h1>
+        <nav>
+            <a href="/home" class="btn">Home</a>
+            <a href="/profile" class="btn">Profile</a>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container new-article-container">
+        <h2 class="text-center">Write your story</h2>
+        <form id="new-post-form">
+            <div class="mb-3">
+                <label for="title" class="form-label">Title</label>
+                <input type="text" class="form-control" id="title" placeholder="Enter title" required>
+            </div>
+            <div class="mb-3">
+                <label for="body" class="form-label">Tell your story</label>
+                <textarea class="form-control" id="body" placeholder="Write your content here..." rows="12" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="status" class="form-label">Post Status</label>
+                <select class="form-select" id="status" required>
+                    <option value="public">Public</option>
+                    <option value="draft">Draft</option>
+                    <option value="archived">Archived</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-success w-100">Publish</button>
+            <button type="button" class="btn btn-home" id="home-button">Go to Home</button>
+        </form>
     </div>
-    <div class="mb-3">
-      <label for="body" class="form-label">Content</label>
-      <textarea class="form-control" id="body" placeholder="Write your content here..." rows="5" required></textarea>
-    </div>
-    <div class="mb-3">
-      <label for="status" class="form-label">Post Status</label>
-      <select class="form-select" id="status" required>
-        <option value="public">Public</option>
-        <option value="draft">Draft</option>
-        <option value="archived">Archived</option>
-      </select>
-    </div>
-    <button type="submit" class="btn btn-success w-100">Publish</button>
-    <button type="button" class="btn btn-home" id="home-button">Go to Home</button>
-  </form>
-</div>
 
-<script src="./static/js/auth.js"></script>
-<script>
-  document.getElementById("new-post-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
+    <!-- Footer -->
+    <footer>
+        <p>Reado © 2025</p>
+        <small>Where good ideas find you</small>
+    </footer>
 
-    const title = document.getElementById("title").value.trim();
-    const body = document.getElementById("body").value.trim();
-    const status = document.getElementById("status").value;
+    <script src="./static/js/auth.js"></script>
+    <script>
+        document.getElementById("new-post-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
 
-    let token = localStorage.getItem("accessToken");
-    const deviceIdentifier = localStorage.getItem("deviceIdentifier");
+            const title = document.getElementById("title").value.trim();
+            const body = document.getElementById("body").value.trim();
+            const status = document.getElementById("status").value;
 
-    if (!token) {
-      token = await refreshAccessToken(); // Try refreshing the token
-      if (!token) {
-        alert("Session expired. Please log in again.");
-        window.location.href = "/login";
-        return;
-      }
-    }
+            let token = localStorage.getItem("accessToken");
+            const deviceIdentifier = localStorage.getItem("deviceIdentifier");
 
-    try {
-      const res = await fetch("http://localhost:3000/admin/blogs/create-post", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-          "deviceIdentifier": deviceIdentifier
-        },
-        body: JSON.stringify({ title, body, status })
-      });
+            if (!token) {
+                token = await refreshAccessToken();
+                if (!token) {
+                    alert("Session expired. Please log in again.");
+                    window.location.href = "/login";
+                    return;
+                }
+            }
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message);
-      }
+            try {
+                const res = await fetch("http://localhost:3000/admin/blogs/create-post", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`,
+                        "deviceIdentifier": deviceIdentifier
+                    },
+                    body: JSON.stringify({ title, body, status })
+                });
 
-      alert("Post published successfully!");
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.message);
+                }
 
-      // ✅ Check if `data.post` exists before redirecting
-      if (data.post && data.post.id) {
-        window.location.href = `single_article.html?id=${data.post._id}`;
-      } else {
-        console.warn("Post created but response did not include post details.");
-        window.location.href = "/home";
-      }
-    } catch (error) {
-      alert(error.message);
-    }
-  });
+                alert("Post published successfully!");
+                window.location.href = "/home";
+            } catch (error) {
+                alert(error.message);
+            }
+        });
 
-
-  document.getElementById("home-button").addEventListener("click", () => {
-      window.location.href = "/home";
-  });
-</script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        document.getElementById("home-button").addEventListener("click", () => {
+            window.location.href = "/home";
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
