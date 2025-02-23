@@ -48,12 +48,12 @@
   </section>
 </main>
 
-<script src="./static/js/auth.js"></script>
 <script>
   async function fetchProfile() {
     try {
       const token = localStorage.getItem("accessToken");
       const deviceIdentifier = localStorage.getItem("deviceIdentifier");
+
       if (!token) {
         window.location.href = "/login";
         return;
@@ -68,6 +68,13 @@
       });
 
       const data = await res.json();
+
+      if (!res.ok) {
+        alert("Unauthorized! Redirecting to login.");
+        window.location.href = "/login";
+        return;
+      }
+
       if (res.ok) {
         document.getElementById("user-name").textContent = data.user.fullname;
         document.getElementById("user-email").textContent = data.user.email;

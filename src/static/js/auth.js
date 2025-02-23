@@ -1,4 +1,3 @@
-// Universal API Request Function (Handles Headers)
 async function apiRequest(url, method = "GET", body = null) {
     const token = localStorage.getItem("accessToken");
     const deviceIdentifier = getDeviceIdentifier();
@@ -22,7 +21,7 @@ async function refreshAccessToken() {
     try {
         const res = await fetch("http://localhost:3000/access-token", {
             method: "POST",
-            credentials: "include", // ✅ Sends cookies automatically
+            credentials: "include", // Send cookies
             headers: {
                 "deviceIdentifier": localStorage.getItem("deviceIdentifier")
             }
@@ -79,7 +78,7 @@ async function fetchWithAuth(url, options = {}) {
 function getDeviceIdentifier() {
     let deviceIdentifier = localStorage.getItem("deviceIdentifier");
     if (!deviceIdentifier) {
-        deviceIdentifier = crypto.randomUUID(); // Generation
+        deviceIdentifier = crypto.randomUUID(); // device identifier generation
         localStorage.setItem("deviceIdentifier", deviceIdentifier);
     }
     return deviceIdentifier;
@@ -128,6 +127,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 alert(res.message);
             }
         });
+    }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    const token = localStorage.getItem("accessToken");
+
+    if (!token && window.location.pathname === "/profile") {
+        window.location.href = "/login"; // Redirect to login page
     }
 });
 

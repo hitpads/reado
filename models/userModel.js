@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 
 const schemas = require("./secure/userValidation");
 
@@ -20,6 +21,8 @@ const userSchema = new mongoose.Schema({
         required: true,
         minlength: 4,
     },
+    isVerified: { type: Boolean, default: false },
+    verificationToken: { type: String },
     roles: [
         {
             type: mongoose.Schema.Types.ObjectId,
@@ -53,6 +56,10 @@ const userSchema = new mongoose.Schema({
         default: Date.now,
     },
 });
+
+userSchema.methods.generateVerificationToken = function () {
+    this.verificationToken = crypto.randomBytes(32).toString("hex");
+};
 
 // Set User Validation in Statics
 userSchema.statics.userValidation = function (body) {

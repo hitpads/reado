@@ -1,4 +1,5 @@
 const express = require("express");
+const { verifyEmail } = require("../controllers/userController");
 const path = require("path");
 const userController = require("../controllers/userController");
 const {
@@ -22,6 +23,8 @@ router.post("/register", userController.register);
 router.get("/register", (req, res) => {
     res.sendFile(path.join(__dirname, "..", "src", "register.html"));
 });
+
+router.get("/verify-email", userController.verifyEmail);
 
 // POST - /logout - Logout Handler
 router.post("/logout", authenticated, userController.logout);

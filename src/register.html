@@ -63,10 +63,10 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ fullname, email, password, confirmPassword })
     });
-    
+
     const data = await res.json();
     if (res.ok) {
-      alert("Registration successful! You can now log in.");
+      alert("Verification link has been sent to your email. Please check your inbox.");
       window.location.href = "/login";
     } else {
       alert(data.message);

@@ -1,7 +1,8 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const Blog = require("../models/blogModel");
-
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 
 const User = require("../models/userModel");
 const { createError } = require("../middlewares/errors");
@@ -14,6 +15,10 @@ exports.login = async (email, password, rememberMe, deviceIdentifier) => {
 
     if (!user) {
         throw createError(404, "", "no user found");
+    }
+
+    if (!user || !user.isVerified) {
+        throw new Error("Please verify your email first");
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
@@ -82,19 +87,45 @@ exports.login = async (email, password, rememberMe, deviceIdentifier) => {
 exports.register = async (fullname, email, password, confirmPassword) => {
     await User.userValidation({ fullname, email, password, confirmPassword });
 
-    const user = await User.findOne({ email });
-    if (user) {
-        throw createError(422, "", "email is already registerd");
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+        throw new Error("Email is already registered");
     }
 
-    await User.create({
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+
+    const newUser = await User.create({
         fullname,
         email,
         password,
+        verificationToken,
     });
+
+    const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
+    await sendVerificationEmail(email, verificationLink);
 
     return true;
 };
+
+async function sendVerificationEmail(email, verificationLink) {
+    let transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false, // `true` for port 465, `false` for 587
+        auth: {
+            user: 'ansarsh1243@gmail.com',
+            pass: 'emldmigdyfckwssf',
+        },
+    });
+
+    await transporter.sendMail({
+        from: `"no reply" <${process.env.SMTP_FROM}>`,
+        to: email,
+        subject: "Verify Your Email",
+        html: `<p>Click the link below to verify your email:</p>
+               <a href="${verificationLink}">Verify Email</a>`,
+    });
+}
 
 // Change Password
 exports.changePassword = async (

@@ -127,6 +127,25 @@ exports.register = async (req, res, next) => {
         next(err);
     }
 };
+// /verify-mail 
+exports.verifyEmail = async (req, res, next) => {
+    try {
+        const { token } = req.query;
+        const user = await User.findOne({ verificationToken: token });
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid or expired token" });
+        }
+
+        user.isVerified = true;
+        user.verificationToken = null;
+        await user.save();
+
+        res.status(200).json({ message: "Email verified successfully" });
+    } catch (err) {
+        next(err);
+    }
+};
 
 // POST - /forget-password - Forget Password Handler
 exports.forgetPassword = async (req, res, next) => {
