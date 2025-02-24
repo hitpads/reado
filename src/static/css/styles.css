@@ -201,6 +201,42 @@ footer small {
     font-size: 0.9rem;
 }
 
+.home-container::before {
+    content: '';
+    position: absolute;
+    right: 0%;
+    top: 70%;
+    transform: translateY(-50%);
+    width: 325px;
+    height: 525px;
+    background-image: url("https://www.svgrepo.com/show/438972/flower-green.svg");
+    background-repeat: no-repeat;
+    background-size: contain;
+    z-index: -1;
+    pointer-events: none;
+    animation: float 6s ease-in-out infinite;
+    opacity: 0.8;
+
+}
+
+.home-container::after {
+    content: '';
+    position: absolute;
+    left: 0%;
+    top: 70%;
+    transform: translateY(-50%);
+    width: 300px;
+    height: 500px;
+    background-image: url("https://www.svgrepo.com/show/438974/flower-leaf-2.svg");
+    background-repeat: no-repeat;
+    background-size: contain;
+    z-index: -1;
+    pointer-events: none;
+    animation: float 6s ease-in-out infinite;
+    opacity: 0.7;
+
+}
+
 /* Floating Action Button */
 .fab {
     position: fixed;
@@ -210,7 +246,7 @@ footer small {
     width: 60px;
     height: 60px;
     border-radius: 100%;
-    background-color: #000000;
+    background-color: #22771f;
     color: white;
     display: flex;
     align-items: center;
@@ -526,5 +562,193 @@ th {
     font-size: 1.2em;
     color: #333;
 }
+
+/* Updated Profile Container Styles */
+.profile-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 40px;
+    background: #fcfcfc;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    border-radius: 16px;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+/* Profile Info Section */
+#profile-info {
+    padding: 36px;
+    margin-bottom: 40px;
+    border-radius: 16px;
+    background: #fcfcfc;
+    border: 1px solid rgba(0,0,0,0.06);
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+#profile-info h2 {
+    font-size: 1.8rem;
+    color: #2c3338;
+    margin-bottom: 32px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+#profile-info p {
+    font-size: 1.1rem;
+    color: #3c4043;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.03);
+    transition: all 0.2s ease;
+}
+
+#profile-info p:hover {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 2px 8px rgba(66, 66, 66, 0.03);
+}
+
+#profile-info strong {
+    min-width: 100px;
+    color: #5f6368;
+    font-weight: 500;
+}
+
+/* Saved Posts Section */
+#saved-posts {
+    padding-top: 20px;
+}
+
+#saved-posts h2 {
+    font-size: 2rem;
+    color: #222;
+    margin-bottom: 28px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+}
+
+#saved-posts .post {
+    padding: 32px;
+    margin-bottom: 24px;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+#saved-posts .post:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+#saved-posts .post h3 {
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+}
+
+#saved-posts .post h3 a {
+    color: #222;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+#saved-posts .post h3 a:hover {
+    color: #1a8917;
+}
+
+#saved-posts .post p {
+    color: #595959;
+    line-height: 1.7;
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    opacity: 0.8;
+}
+
+/* Add smooth fade in animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.profile-container {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Alternative decorative pattern */
+.profile-container::before {
+    content: '';
+    position: absolute;
+    left: 0%; /* Changed from left: 2% to right: 2% */
+    top: 70%;
+    transform: translateY(-50%);
+    width: 300px;
+    height: 500px;
+    background-image: url("https://www.svgrepo.com/show/438975/flower-orange-3.svg");
+    background-repeat: no-repeat;
+    background-size: contain;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.7;
+
+; /* Added slight transparency */
+}
+
+.profile-container::after {
+    content: '';
+    position: absolute;
+    right: 1%; /* Changed from left: 2% to right: 2% */
+    top: 70%;
+    transform: translateY(-50%);
+    width: 275px;
+    height: 475px;
+    background-image: url("https://www.svgrepo.com/show/198804/poker-flower.svg");
+    background-repeat: no-repeat;
+    background-size: contain;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.new-article-container::before {
+    content: '';
+    position: absolute;
+    left: 2%; /* Changed from left: 2% to right: 2% */
+    top: 70%;
+    transform: translateY(-50%);
+    width: 300px;
+    height: 500px;
+    background-image: url("https://www.svgrepo.com/show/438975/flower-orange-3.svg");
+    background-repeat: no-repeat;
+    background-size: contain;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.7;
+
+; /* Added slight transparency */
+}
+
+.new-article-container::after {
+    content: '';
+    position: absolute;
+    right: 2%; /* Changed from left: 2% to right: 2% */
+    top: 70%;
+    transform: translateY(-50%);
+    width: 275px;
+    height: 475px;
+    background-image: url("https://www.svgrepo.com/show/198804/poker-flower.svg");
+    background-repeat: no-repeat;
+    background-size: contain;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
 
 

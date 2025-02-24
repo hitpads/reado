@@ -1,52 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      background-color: #f8f9fa;
-    }
-    .container {
-      max-width: 600px;
-      margin: 50px auto;
-      background: white;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
-    }
-    .post {
-      background: white;
-      padding: 15px;
-      margin: 10px 0;
-      border-radius: 10px;
-      box-shadow: 0px 0px 5px rgba(0,0,0,0.1);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Reado</title>
+    <link href="./static/css/styles.css" rel="stylesheet">
 </head>
 <body>
-<header class="bg-dark text-white text-center py-3">
-  <h1>reado.</h1>
-  <nav>
-    <a href="/home" class="btn btn-outline-light">home</a>
-    <button id="logout" class="btn btn-danger">logout</button>
-  </nav>
-</header>
-<main class="container">
-  <section id="profile-info">
-    <h2>your profile</h2>
-    <p><strong>name:</strong> <span id="user-name">Loading...</span></p>
-    <p><strong>email:</strong> <span id="user-email">Loading...</span></p>
-  </section>
-  <section id="saved-posts">
-    <h2>you saved</h2>
-    <div id="posts-container">
-      <p>Loading saved posts...</p>
-    </div>
-  </section>
-</main>
+    <header>
+        <h1>reado.</h1>
+        <nav>
+            <a href="/home" class="btn">home</a>
+            <button id="logout" class="btn btn-danger">logout</button>
+        </nav>
+    </header>
+
+    <main>
+        <div class="profile-container">
+            <section id="profile-info">
+                <h2>Your Profile</h2>
+                <p>
+                    <strong>Name:</strong>
+                    <span id="user-name">Loading...</span>
+                </p>
+                <p>
+                    <strong>Email:</strong>
+                    <span id="user-email">Loading...</span>
+                </p>
+            </section>
+            
+            <section id="saved-posts">
+                <h2>Saved Stories</h2>
+                <div id="posts-container">
+                    <p>Loading saved posts...</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <p>reado © 2025</p>
+        <small>where good ideas find you</small>
+    </footer>
 
 <script>
   async function fetchProfile() {
@@ -120,7 +115,22 @@
   });
   
   document.addEventListener("DOMContentLoaded", fetchProfile);
+
+  
+        // Add scroll animation to FAB
+window.addEventListener('scroll', () => {
+    const fab = document.getElementById('createPost');
+    fab.classList.add('scroll');
+    
+    // Remove animation class after it completes
+    setTimeout(() => {
+        fab.classList.remove('scroll');
+    }, 500);
+});
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="./static/js/profile.js"></script>
+<a href="/new_article" class="fab" id="createPost">New Post</a>
+
 </body>
 </html>
