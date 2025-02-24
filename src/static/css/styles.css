@@ -160,8 +160,9 @@ footer small {
 
 /* When container is used for posts list */
 #posts-container .post {
-    max-width: 100%;  /* Make posts use full container width */
-    padding: 32px;    /* Increased padding for better spacing */
+    max-width: 100%;
+    padding: 32px;
+    overflow: hidden; /* Ensure content stays within */
 }
 
 .post:hover {
@@ -177,11 +178,18 @@ footer small {
 .post h3 {
     font-size: 1.4rem;
     margin-bottom: 12px;
+    max-height: 2.8em;
+    overflow: hidden;
 }
 
 .post h3 a {
     color: #292929;
     text-decoration: none;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
 }
 
 #posts-container .post p {
@@ -194,6 +202,12 @@ footer small {
     color: #4a4a4a;
     line-height: 1.6;
     margin-bottom: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Limit to 3 lines */
+    -webkit-box-orient: vertical;
+    max-height: 4.8em; /* 3 lines × 1.6 line-height */
 }
 
 .post small {
@@ -724,7 +738,7 @@ th {
     transform: translateY(-50%);
     width: 300px;
     height: 500px;
-    background-image: url("https://www.svgrepo.com/show/438975/flower-orange-3.svg");
+    background-image: url("https://www.svgrepo.com/show/317563/doorpost.svg");
     background-repeat: no-repeat;
     background-size: contain;
     z-index: -1;
@@ -742,12 +756,159 @@ th {
     transform: translateY(-50%);
     width: 275px;
     height: 475px;
-    background-image: url("https://www.svgrepo.com/show/198804/poker-flower.svg");
+    background-image: url("https://www.svgrepo.com/show/29808/dianthus.svg");
     background-repeat: no-repeat;
     background-size: contain;
     z-index: -1;
     pointer-events: none;
     opacity: 0.7;
+}
+
+/* Add these styles to your styles.css file */
+.single-article-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 40px;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    position: relative;
+}
+
+.single-article-container h1 {
+    font-size: 2.2rem;
+    color: #292929;
+    margin-bottom: 32px;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: -0.5px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.single-article-container article {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #4a4a4a;
+    margin-bottom: 40px;
+    max-width: 100%; /* Ensure text doesn't exceed container width */
+    word-wrap: break-word; /* Break long words if needed */
+    overflow-wrap: break-word; /* Modern browsers */
+    white-space: pre-wrap; /* Preserve whitespace and wrapping */
+    text-align: justify; /* Optional: for better text distribution */
+    padding: 0 10px; /* Add some padding on the sides */
+}
+
+.single-article-container .btn-warning {
+    background-color: #22771f;
+    border: none;
+    color: white;
+    padding: 9px 18px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    margin-bottom: 32px;
+    display: inline-block; /* Changed from block to inline-block */
+    width: auto; /* Let the button size to its content */
+    font-size: 0.9rem; /* Added smaller font size */
+}
+
+.single-article-container article p {
+    margin-bottom: 1.5rem;
+}
+
+.single-article-container .btn-warning:hover {
+    background-color: #156912;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.single-article-container::before {
+    content: '';
+    position: absolute;
+    left: 2%;
+    top: 70%;
+    transform: translateY(-50%);
+    width: 300px;
+    height: 500px;
+    background-image: url("https://www.svgrepo.com/show/438975/flower-orange-3.svg");
+    background-repeat: no-repeat;
+    background-size: contain;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.single_article-container::after {
+    content: '';
+    position: absolute;
+    right: 2%;
+    top: 70%;
+    transform: translateY(-50%);
+    width: 275px;
+    height: 475px;
+    background-image: url("https://www.svgrepo.com/show/317385/continent.svg    ");
+    background-repeat: no-repeat;
+    background-size: contain;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+/* Comments section styling */
+#comments {
+    margin-top: 30px;
+}
+
+#comments h2 {
+    font-size: 1.2rem;
+    color: #292929;
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+.comment {
+    background: #f8f9fa !important;
+    padding: 14px !important;
+    margin-bottom: 12px !important;
+    border-radius: 6px !important;
+    border: 1px solid rgba(0,0,0,0.05) !important;
+    transition: all 0.3s ease;
+    font-size: 0.95rem; /* Added smaller font size */
+
+}
+
+.comment:hover {
+    background: #fff !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+#comment-form textarea {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    min-height: 60px;
+    transition: all 0.3s ease;
+}
+
+#comment-form textarea:focus {
+    border-color: #1a8917;
+    box-shadow: 0 0 0 3px rgba(26, 137, 23, 0.1);
+    outline: none;
+}
+
+#comment-form .btn-success {
+    background-color: #1a8917;
+    border: none;
+    padding: 6px 12px;
+    font-weight: 500;
+    font-size: 0.9rem; /* Added smaller font size */
+
+}
+
+#comment-form .btn-success:hover {
+    background-color: #156912;
 }
 
 
