@@ -99,7 +99,7 @@ exports.editUrlRole = async (id, url, description, roles) => {
 
 // Delete Url
 exports.deleteUrlRole = async (id) => {
-    const url = await UrlRole.findByIdAndRemove(id).populate("roles");
+    const url = await UrlRole.findByIdAndDelete(id).populate("roles");
 
     if (!url) {
         throw createError(404, "", "url not found");

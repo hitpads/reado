@@ -8,7 +8,7 @@ const {
 
 const router = express.Router();
 
-// GET - /admin/blogs/all - Shows All the Posts
+// GET - /admin/blogs/all - Shows all posts
 router.get(
     "/all",
     authenticated,
@@ -16,7 +16,7 @@ router.get(
     blogManagementController.showAllPosts
 );
 
-// GET - /admin/blogs/single-post/:id - Shows All the Posts
+// GET - /admin/blogs/single-post/:id - Shows a single post
 router.get(
     "/single-post/:id",
     authenticated,
@@ -24,7 +24,7 @@ router.get(
     blogManagementController.singlePost
 );
 
-// POST - /admin/blogs/create-post - Creates a new post
+// POST - /admin/blogs/create-post - Creates a post
 router.post(
     "/create-post",
     authenticated,
@@ -47,12 +47,3 @@ router.delete(
     // requireRoles,
     blogManagementController.deletePost
 );
-
-// POST - /admin/blogs/upload-image - Image Upload Handler
-router.post(
-    "/upload-image",
-    authenticated,
-    // requireRoles,
-    blogManagementController.uploadImage
-);
-module.exports = router;

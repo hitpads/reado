@@ -20,7 +20,7 @@ router.get(
 router.get("/post-comment/:id", commentController.getCommentsOfPost);
 
 // POST - /comments/add-comment - Adds a new comment
-router.post("/add-comment", commentController.addComment);
+router.post("/add-comment", authenticated, commentController.addComment); // ✅ Apply middleware
 
 // PUT - /comments/edit-comment/:id - Edits a comment
 router.put("/edit-comment/:id", authenticated, commentController.editComment);

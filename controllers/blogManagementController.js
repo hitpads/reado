@@ -28,13 +28,13 @@ exports.createPost = async (req, res, next) => {
     try {
         const user = req.userId;
         const { title, body, status } = req.body;
-        await service.createPost(
+        const post = await service.createPost(
             title,
             body,
             status,
             user
         );
-        res.status(201).json({ message: "done" });
+        res.status(201).json({ message: "done", post});
     } catch (err) {
         next(err);
     }
