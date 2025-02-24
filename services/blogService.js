@@ -6,13 +6,6 @@ const redis = require("redis");
 const client = redis.createClient();
 // All Posts
 exports.showAllPosts = async () => {
-    if (!client.isOpen) await client.connect();
-
-    const cachedPosts = JSON.parse(await client.get("public_posts"));
-    if (cachedPosts) {
-        return cachedPosts;
-    }
-
     const posts = await Blog.find({ status: "public" }).populate([
         "user",
         "comments",
@@ -21,9 +14,6 @@ exports.showAllPosts = async () => {
     if (!posts) {
         throw createError(404, "", "no post found");
     }
-
-    await client.set("public_posts", JSON.stringify(posts));
-    await client.expire("public_posts", 900);
 
     return posts;
 };

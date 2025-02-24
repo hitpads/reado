@@ -34,7 +34,7 @@ const commentSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        default: "waiting",
+        default: "confirmed",
         enum: ["waiting", "rejected", "confirmed"],
     },
     createdAt: {

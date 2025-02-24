@@ -1,13 +1,13 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const redis = require("redis");
+const Blog = require("../models/blogModel");
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 
 const User = require("../models/userModel");
 const { createError } = require("../middlewares/errors");
 const RefreshToken = require("../models/refreshTokenModel");
 const ms = require("ms");
-
-const client = redis.createClient();
 
 // Login
 exports.login = async (email, password, rememberMe, deviceIdentifier) => {
@@ -15,6 +15,10 @@ exports.login = async (email, password, rememberMe, deviceIdentifier) => {
 
     if (!user) {
         throw createError(404, "", "no user found");
+    }
+
+    if (!user || !user.isVerified) {
+        throw new Error("Please verify your email first");
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
@@ -44,8 +48,8 @@ exports.login = async (email, password, rememberMe, deviceIdentifier) => {
 
     if (!isRefreshTokenAlreadyCreated) {
         const refreshTokenExpiresIn = rememberMe ? "15d" : "1d";
-        const expiresInMs = ms(refreshTokenExpiresIn); // Convert expiresIn string to milliseconds
-        const refreshTokenExpirationTime = Date.now() + expiresInMs; // Add expiresInMs to current timestamp
+        const expiresInMs = ms(refreshTokenExpiresIn);
+        const refreshTokenExpirationTime = Date.now() + expiresInMs;
 
         const refreshToken = jwt.sign(
             {
@@ -68,6 +72,8 @@ exports.login = async (email, password, rememberMe, deviceIdentifier) => {
             expiresAt: new Date(refreshTokenExpirationTime),
             deviceIdentifier,
         });
+    } else {
+        theRefreshToken = isRefreshTokenAlreadyCreated.token;
     }
 
     return {
@@ -77,171 +83,49 @@ exports.login = async (email, password, rememberMe, deviceIdentifier) => {
     };
 };
 
-// Create new access token
-exports.newAccessToken = async (token, deviceIdentifier) => {
-    if (!client.isOpen) await client.connect();
-
-    const decodedToken = jwt.decode(token);
-
-    if (decodedToken.usage === "auth-refresh") {
-        try {
-            const isUserLoggedIn = await RefreshToken.findOne({ deviceIdentifier });
-
-            if (!isUserLoggedIn) {
-                throw createError(401, "", "login again");
-            }
-
-            const finalDecodedToken = jwt.verify(token, process.env.JWT_SECRET);
-
-            if (!finalDecodedToken) {
-                await RefreshToken.findOneAndRemove({ deviceIdentifier });
-                throw createError(401, "", "login again");
-            }
-
-            const isTokenDisabled = await client.get(token);
-
-            if (isTokenDisabled == "disabled") {
-                throw createError(401, "", "This refresh token is disabled");
-            }
-
-            const user = await User.findById(decodedToken.user.userId);
-
-            const accessToken = jwt.sign(
-                {
-                    user: {
-                        userId: user._id.toString(),
-                        email: user.email,
-                        fullname: user.fullname,
-                    },
-                    usage: "auth-access",
-                },
-                process.env.JWT_SECRET,
-                { expiresIn: "15m" }
-            );
-
-            return accessToken;
-        } catch (err) {
-            if (err.message === "jwt expired") {
-                await RefreshToken.findOneAndRemove({ deviceIdentifier });
-                throw createError(401, "", "login again");
-            }
-            throw createError(401, "", "login again");
-        }
-    } else {
-        throw createError(401, "", "token is not valid");
-    }
-};
-
 // Register
 exports.register = async (fullname, email, password, confirmPassword) => {
     await User.userValidation({ fullname, email, password, confirmPassword });
 
-    const user = await User.findOne({ email });
-    if (user) {
-        throw createError(422, "", "email is already registerd");
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+        throw new Error("Email is already registered");
     }
 
-    await User.create({
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+
+    const newUser = await User.create({
         fullname,
         email,
         password,
+        verificationToken,
     });
 
-    //Send Welcome Email
-    //sendEmail(email, fullname, "Welcome!", "Thank you for chosing us");
+    const verificationLink = `http://localhost:3000/verify-email?token=${verificationToken}`;
+    await sendVerificationEmail(email, verificationLink);
 
     return true;
 };
 
-// Logout
-exports.logout = async (accessToken, deviceIdentifier, userId) => {
-    if (!client.isOpen) await client.connect();
-
-    const decodedToken = jwt.decode(accessToken);
-
-    if (!decodedToken) {
-        throw createError(401, "", "token is wrong");
-    }
-    const disabledToken = await client.get(accessToken);
-    if (disabledToken == "disabled") {
-        throw createError(402, "", "The access token is completly disabled");
-    }
-
-    await client.set(accessToken, "disabled");
-    await client.expire(accessToken, 24 * 60 * 60);
-    await RefreshToken.findOneAndRemove({
-        deviceIdentifier,
-        user: decodedToken.user.userId,
+async function sendVerificationEmail(email, verificationLink) {
+    let transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false, // `true` for port 465, `false` for 587
+        auth: {
+            user: 'ansarsh1243@gmail.com',
+            pass: 'emldmigdyfckwssf',
+        },
     });
-};
 
-// Forget Password
-exports.forgetPassword = async (email) => {
-    const user = await User.findOne({ email });
-
-    if (!user) {
-        throw createError(404, "", "user not found");
-    }
-
-    const token = jwt.sign(
-        { userId: user._id, usage: "forgetPassword" },
-        process.env.JWT_SECRET,
-        {
-            expiresIn: "1h",
-        }
-    );
-    const resetLink = `${process.env.DOMAIN}/reset-password/${token}`; // Replace your domain
-    console.log(resetLink);
-
-    const isEmailSent = await sendEmail(
-        user.email,
-        user.fullname,
-        "forget password",
-        `<a href="${resetLink}">click here for changing password/a>`
-    );
-
-    if (!isEmailSent) {
-        throw createError(422, "", "email didn't send - server problem");
-    }
-};
-
-// Reset Forgeted Password
-exports.resetPassword = async (token, password, confirmPassword) => {
-    if (!client.isOpen) await client.connect();
-
-    const isTokenDisabled = await client.get(token);
-    if (isTokenDisabled == "disabled") {
-        throw createError(
-            401,
-            "This token is disabled",
-            "no permission to access the resource"
-        );
-    }
-
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (!decodedToken) {
-        throw createError(401, "", "don't have the premission");
-    }
-
-    if (decodedToken.usage !== "forgetPassword") {
-        throw createError(422, "", "this token is not for password resetting");
-    }
-
-    if (password !== confirmPassword) {
-        throw createError(422, "", "password and confirm password don't match");
-    }
-
-    const user = await User.findOne({ _id: decodedToken.userId });
-
-    if (!user) {
-        throw createError(404, "", "no user found with this id");
-    }
-
-    user.password = password;
-    await user.save();
-    await client.set(token, 24 * 60 * 60);
-};
+    await transporter.sendMail({
+        from: `"no reply" <${process.env.SMTP_FROM}>`,
+        to: email,
+        subject: "Verify Your Email",
+        html: `<p>Click the link below to verify your email:</p>
+               <a href="${verificationLink}">Verify Email</a>`,
+    });
+}
 
 // Change Password
 exports.changePassword = async (
@@ -307,43 +191,66 @@ exports.userInfo = async (userId) => {
 
     return user;
 };
+// logout
+exports.logout = async (userId, deviceIdentifier) => {
+    try {
+        if (!userId || !deviceIdentifier) {
+            throw createError(400, "", "User ID and device identifier are required");
+        }
 
-// Saves a post
-exports.savePost = async (userId, postId) => {
-    const user = await User.findById(userId);
-    const post = await User.findById(postId);
+        console.log("🔍 Checking refresh token for:", { userId, deviceIdentifier });
 
-    if (!user || !post) {
-        throw createError(404, "", "no user or post found");
+        const refreshTokenDoc = await RefreshToken.findOne({
+            user: userId,
+            deviceIdentifier
+        });
+
+        if (!refreshTokenDoc) {
+            console.log("⚠️ No refresh token found, but logging out anyway.");
+            return { message: "Logout successful (no refresh token found)" };
+        }
+
+        await refreshTokenDoc.deleteOne();
+
+        return { message: "Logout successful" };
+    } catch (err) {
+        console.error("🚨 Logout Service Error:", err.message);
+        throw err;
     }
-
-    const isPostAlreadySaved = user.savedPosts.find(
-        (s) => s.toString() == post.id.toString()
-    );
-    if (isPostAlreadySaved) throw createError(402, "", "post is already saved");
-
-    user.savedPosts.push(post.id);
-    user.save();
 };
 
-// Unsaves a post
-exports.unsavePost = async (userId, postId) => {
+exports.savePost = async (userId, postId) => {
     const user = await User.findById(userId);
-    const post = await User.findById(postId);
-    console.log(post);
-
-    if (!user || !post) {
-        throw createError(404, "", "no user or post found");
+    if (!user) {
+        throw createError(404, "", "User not found");
     }
 
-    const isPostAlreadySaved = user.savedPosts.find(
-        (s) => s.toString() == post.id.toString()
-    );
-    if (!isPostAlreadySaved) throw createError(402, "", "post is not saved");
+    const post = await Blog.findById(postId);
+    if (!post) {
+        throw createError(404, "", "Post not found");
+    }
 
-    const startIndex = user.savedPosts.findIndex(
-        (s) => s.toString() == post.id.toString()
-    );
-    user.savedPosts.splice(startIndex, 1);
-    user.save();
+    if (!user.savedPosts.includes(postId)) {
+        user.savedPosts.push(postId);
+        await user.save();
+    }
+
+    return { message: "Post saved successfully" };
+};
+
+exports.unsavePost = async (userId, postId) => {
+    const user = await User.findById(userId);
+    if (!user) {
+        throw createError(404, "", "User not found");
+    }
+
+    const postIndex = user.savedPosts.indexOf(postId);
+    if (postIndex === -1) {
+        throw createError(400, "", "Post is not saved");
+    }
+
+    user.savedPosts.splice(postIndex, 1);
+    await user.save();
+
+    return { message: "Post unsaved successfully" };
 };

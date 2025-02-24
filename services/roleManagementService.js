@@ -39,7 +39,7 @@ exports.editRole = async (id, name) => {
 
 // Delete Role
 exports.deleteRole = async (id) => {
-    const role = await Role.findByIdAndRemove(id);
+    const role = await Role.findByIdAndDelete(id);
 
     if (!role) {
         throw createError(404, "", "role not found");
